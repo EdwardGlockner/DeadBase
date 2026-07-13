@@ -20,6 +20,7 @@ from deadlock_coach.storage import (
     normalize_match_history,
     normalize_patch_feed,
     normalize_player_performance_curve,
+    normalize_steam_patch_feed,
     save_json_snapshot,
 )
 
@@ -89,6 +90,87 @@ class NormalizationTests(unittest.TestCase):
 
             self.assertEqual(patch_count, 1)
             self.assertEqual(match_count, 1)
+
+    def test_steam_patch_feed_persists_full_content(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            settings = Settings(project_root=Path(tmpdir))
+            initialize_workspace(settings)
+
+            newsitems = [
+                {
+                    "gid": "1836506165584438",
+                    "title": "Minor Update - 07-09-2026",
+                    "url": "https://steamstore-a.akamaihd.net/news/externalpost/example",
+                    "author": "IceFrog",
+                    "contents": "[p]- Urn Runner move speed reduced from +3.5m to +2m[/p]",
+                    "feedname": "steam_community_announcements",
+                    "date": 1783625215,
+                    "tags": ["patchnotes", "mod_reviewed"],
+                },
+            ]
+            snapshot = save_json_snapshot(
+                settings,
+                "steam_news",
+                "patches",
+                "1422450",
+                "https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=1422450",
+                newsitems,
+            )
+            self.assertEqual(normalize_steam_patch_feed(settings, snapshot, newsitems), 1)
+
+            connection = sqlite3.connect(settings.warehouse_db_path)
+            connection.row_factory = sqlite3.Row
+            row = connection.execute(
+                "SELECT patch_id, source, published_at, content_full, content_excerpt FROM patch_event"
+            ).fetchone()
+            connection.close()
+
+            self.assertEqual(row["patch_id"], "steam::1836506165584438")
+            self.assertEqual(row["source"], "steam")
+            # Steam epoch is normalized to an ISO-8601 UTC string for ordering.
+            self.assertTrue(row["published_at"].startswith("2026-"))
+            self.assertIn("+00:00", row["published_at"])
+            # Full body is preserved even when longer than the 280-char excerpt.
+            self.assertIn("Urn Runner move speed", row["content_full"])
+            self.assertLessEqual(len(row["content_excerpt"]), 280)
+
+    def test_steam_patch_feed_upserts_on_repeat_sync(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            settings = Settings(project_root=Path(tmpdir))
+            initialize_workspace(settings)
+
+            def _sync(contents: str) -> None:
+                newsitems = [
+                    {
+                        "gid": "42",
+                        "title": "Minor Update",
+                        "url": "https://example/view/42",
+                        "contents": contents,
+                        "feedname": "steam_community_announcements",
+                        "date": 1783625215,
+                        "tags": ["patchnotes"],
+                    }
+                ]
+                snapshot = save_json_snapshot(
+                    settings, "steam_news", "patches", "1422450", "https://example", newsitems
+                )
+                normalize_steam_patch_feed(settings, snapshot, newsitems)
+
+            _sync("[p]- first version[/p]")
+            _sync("[p]- second version[/p]")
+
+            connection = sqlite3.connect(settings.warehouse_db_path)
+            count = connection.execute(
+                "SELECT COUNT(*) FROM patch_event WHERE source = 'steam'"
+            ).fetchone()[0]
+            content = connection.execute(
+                "SELECT content_full FROM patch_event WHERE patch_id = 'steam::42'"
+            ).fetchone()[0]
+            connection.close()
+
+            # Same gid re-synced must update in place, not duplicate.
+            self.assertEqual(count, 1)
+            self.assertIn("second version", content)
 
     def test_analytics_snapshot_is_persisted_with_query_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

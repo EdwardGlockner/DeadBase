@@ -142,6 +142,22 @@ Sync a leaderboard:
 PYTHONPATH=src .venv/bin/python -m deadlock_coach sync leaderboard --region Europe
 ```
 
+Sync official patch notes from Steam (grounds the coach in recent balance changes):
+
+```bash
+PYTHONPATH=src .venv/bin/python -m deadlock_coach sync steam-patches
+```
+
+See [`docs/patch-notes.md`](/Users/eanu/Documents/deadlock-coach/docs/patch-notes.md) for how patch grounding works.
+
+Export all locally-stored patch notes to `patchnotes_export.md` (full cleaned bodies, newest first):
+
+```bash
+PYTHONPATH=src .venv/bin/python -c "import sys; sys.path.insert(0,'app'); from app.tools import _patch_body_text; from deadlock_coach.config import Settings; from deadlock_coach.storage import _connect; from contextlib import closing; s=Settings.from_env(); rows=list(_connect(s.warehouse_db_path).execute('SELECT source,title,published_at,link,content_full FROM patch_event ORDER BY published_at DESC')); open(s.project_root/'patchnotes_export.md','w',encoding='utf-8').write('\n\n'.join(f'## {r[1]}\n(source {r[0]} | {str(r[2])[:10]})\n\n'+_patch_body_text(r[4],max_chars=10**9)[0] for r in rows)); print('wrote', len(rows), 'to patchnotes_export.md')"
+```
+
+On Windows (PowerShell), use `.venv\Scripts\python.exe` and set `$env:PYTHONPATH = "src"` first. The output file is git-ignored.
+
 Sync an analytics snapshot:
 
 ```bash
@@ -227,3 +243,4 @@ Planned or in-progress improvements:
 - [`docs/review-guide.md`](/Users/eanu/Documents/deadlock-coach/docs/review-guide.md) for reviewer orientation and validation steps
 - [`docs/architecture.md`](/Users/eanu/Documents/deadlock-coach/docs/architecture.md) for system shape
 - [`docs/data-surface.md`](/Users/eanu/Documents/deadlock-coach/docs/data-surface.md) for upstream data constraints
+- [`docs/patch-notes.md`](/Users/eanu/Documents/deadlock-coach/docs/patch-notes.md) for official Steam patch-note grounding
