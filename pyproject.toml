@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deadlock-coach"
+version = "0.1.0"
+description = "Local-first foundation for a personalized Deadlock Coach."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "OpenAI Codex" }]
+dependencies = [
+    "google-adk>=2.0.0,<3.0.0",
+    "a2a-sdk~=0.3.22",
+    "aiohttp>=3.13.4",
+    "litellm>=1.75.8",
+    "openai>=1.0.0",
+    "pydantic>=2.8.0,<3.0.0",
+]
+
+[project.optional-dependencies]
+eval = [
+    "google-adk[eval]>=2.0.0,<3.0.0",
+    "google-cloud-aiplatform[evaluation,agent-engines]>=1.132.0,<2.0.0",
+    "google-genai>=2.10.0",
+]
+
+[project.scripts]
+deadlock-coach = "deadlock_coach.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,513 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "regression_global_winrate_with_active_player_context",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 20 matches\n\nUser request:\nwhat hero has the highest win rate right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Treats this as a global question despite active player context. Uses global hero stats if available, answers directly, and does not silently pivot into the user's recent sample."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_eternus_winrate_rank_scope",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nhow does the winrate look in eternus?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers this as a rank-scoped global meta question. Uses Eternus-filtered data if available, avoids all-rank fallback padding unless clearly labeled, and stays concise."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_global_pickrate_and_winrate_no_local_addendum",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat hero has the highest pickrate and winrate right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers both metrics directly from global data if available and does not add unnecessary side-notes like 'if you mean your own games' when the user was already clear."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_full_history_hero_pool",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n\nUser request:\ncan you look at all games i have ever played, what heroes do i usually play?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses the full local sample when available instead of the default recent window. Names the main long-run heroes directly and makes the sample scope clear."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_4_8k_spirit_definition_with_player_loaded",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n\nUser request:\nwhat do people mean by 4.8k spirit?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Stays on the concept question even with a player loaded. Explains 4.8k spirit as category-bar investment into spirit, not one item, and keeps the answer short."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_6_4k_definition_with_player_loaded",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n\nUser request:\nwhat does 6.4k mean in deadlock?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Keeps player context out of the answer. Explains 6.4k as 6,400 souls and usually T4 or late-finisher shorthand, separate from 4.8k investment-bar language, without adding a fake missing-player caveat."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_reference_table_answer_without_limited_sample_framing",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nhow much bonus spirit do you get after 6.4k investment"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers directly from the reference table with the concrete 6.4k spirit value, and does not add 'Limited sample', 'No synced player sample', or other player-telemetry caveats to a non-player reference question."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_weapon_investment_definition_concise",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat does weapon investment mean?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses KB grounding and answers in a short concept style. Explains weapon investment as spend into the weapon family or orange bar, not a long generic theory lecture."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_boons_definition_no_extra_spike_speech",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat are boons?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers the boon definition directly and does not drift into unrelated item-spike or generic build talk unless the user asked for it."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_spirit_damage_definition",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat is spirit damage?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Gives a short grounded explanation of spirit damage and avoids turning the answer into a hero-specific build recommendation."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_generic_shiv_late_game_with_active_player",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 20 matches\n\nUser request:\nwhat are late game items on shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Treats this as a generic Shiv question unless the user asks about their own games. Uses one primary scope, avoids mixing the active player's local sample with global Shiv theory, and separates later pickups from true T4 finishers when both are relevant."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_generic_shiv_t4s_with_active_player",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 20 matches\n\nUser request:\nwhat are t4 items on shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers narrowly with true T4 finishers only when the user specifically asked for T4s. Avoids lower-tier late pickups and does not silently pivot into the active player's own sample."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_player_shiv_late_game_t4s",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Shiv\n- Window: last 20 matches\n\nUser request:\nwhat t4 items do i usually end on with shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Treats this as player-specific telemetry. Names only verified true T4 finishers if supported, says the sample is thin if needed, and does not call T3 items T4."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_latest_patch_shiv_summary",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\ncan you explain the latest patch and what happened to shiv"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses patch grounding rather than memory. Summarizes the latest patch and Shiv-specific changes directly, without refusing when synced patch evidence is available."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_latest_patch_general_summary",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\ncan you explain the last patch for me?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses synced patch or reference grounding and gives a short practical patch summary instead of a generic explanation of how to read patches."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_latest_patch_no_missing_sync_excuse",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\ncan you explain the latest patch and what happened to shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses synced latest-patch context directly, names the concrete Shiv changes, and does not fall back to saying the workspace lacks patch notes when patch evidence is available."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_clarify_after_rank_confusion",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "User request:\nwhat spike do i get first, 4.8k?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Yes — if you mean rank, you're in the 4.8k spike right now."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "what do you mean?"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses the follow-up history to correct the wrong rank/MMR interpretation. Re-anchors the explanation on the Deadlock investment-spike concept and does not stay stuck on the original mistake."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_missing_account_player_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- No active player or account is selected.\n\nUser request:\nwhat do i usually build on billy?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Recognizes this as a player-specific telemetry question and says there is no active player selected, instead of silently switching to generic Billy theory."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_global_build_question_no_player_pivot",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n\nUser request:\nwhat is the most popular build on shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Treats this as a global build-flow question. Uses global item-flow if available and does not answer with the loaded player's recent Shiv games unless clearly labeled as secondary context."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_explicit_hero_switch_overrides_stale_context",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Shiv\n\nUser request:\nwhat does pros build on billy?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "The current-message hero wins over the stale workspace hero. Answers with Billy build flow, not Shiv build flow, and if pro-only data is unavailable it labels the answer as broader high-level/global Billy context instead of hallucinating a Shiv carryover."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_pro_build_question_uses_global_build_flow",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n\nUser request:\nwhat does pros build on billy?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Treats this as a global Billy build-flow question, not a player-vs-pro comparison. If pro-only data is unavailable, it prefers the strongest grounded rank-scoped proxy such as Eternus 6 before broader all-rank flow, and avoids drifting into the active player's sample."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_high_mmr_build_question_prefers_rank_proxy",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat do high-mmr players build on shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers this as a strongest-available rank-scoped global build-flow question. If true pro-only data is unavailable, it should prefer an explicit high-rank proxy like Eternus 6 over vague all-rank wording."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_no_generic_coaching_outro_on_fact_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nis healbane a late game item?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers the factual item question directly and does not append a generic coaching slogan, vague next-step sentence, or unnecessary offer."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_global_winrate_no_local_alt_interpretation",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n\nUser request:\nwhat hero has the highest win rate right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers this directly as a global current-meta question. It should not tack on a speculative side branch like 'if you mean among heroes I play' when the user did not ask that."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "regression_true_t4_precision_no_t3_drift",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n\nUser request:\nwhat true T4 items do I usually finish on late with Shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Treats this as a T4-only question. It names only verified T4 finishers or clearly says the sample is too thin, and it does not mislabel late T2 or T3 items as T4s."
+          }
+        }
+      ]
+    }
+  ]
+}

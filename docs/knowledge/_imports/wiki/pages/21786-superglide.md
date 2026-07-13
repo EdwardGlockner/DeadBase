@@ -1,0 +1,14 @@
+# Superglide
+
+Imported reference
+
+- kind: pages
+- source: Deadlock Wiki
+- url: https://deadlock.wiki/Superglide
+- imported_at: 2026-07-10T07:13:50+00:00
+
+Reference extract:
+
+Redirect to:
+
+- Mantling/Superglide

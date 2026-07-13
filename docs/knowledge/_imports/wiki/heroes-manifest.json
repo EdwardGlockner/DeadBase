@@ -1,0 +1,344 @@
+[
+  {
+    "title": "Abrams",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/abrams.md",
+    "url": "https://deadlock.wiki/Abrams"
+  },
+  {
+    "title": "Apollo",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/apollo.md",
+    "url": "https://deadlock.wiki/Apollo"
+  },
+  {
+    "title": "Bebop",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/bebop.md",
+    "url": "https://deadlock.wiki/Bebop"
+  },
+  {
+    "title": "Billy",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/billy.md",
+    "url": "https://deadlock.wiki/Billy"
+  },
+  {
+    "title": "Boho",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/boho.md",
+    "url": "https://deadlock.wiki/Boho"
+  },
+  {
+    "title": "The Boss",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/the-boss.md",
+    "url": "https://deadlock.wiki/The_Boss"
+  },
+  {
+    "title": "Cadence",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/cadence.md",
+    "url": "https://deadlock.wiki/Cadence"
+  },
+  {
+    "title": "Calico",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/calico.md",
+    "url": "https://deadlock.wiki/Calico"
+  },
+  {
+    "title": "Celeste",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/celeste.md",
+    "url": "https://deadlock.wiki/Celeste"
+  },
+  {
+    "title": "The Doorman",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/the-doorman.md",
+    "url": "https://deadlock.wiki/The_Doorman"
+  },
+  {
+    "title": "Drifter",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/drifter.md",
+    "url": "https://deadlock.wiki/Drifter"
+  },
+  {
+    "title": "Druid",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/druid.md",
+    "url": "https://deadlock.wiki/Druid"
+  },
+  {
+    "title": "Dynamo",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/dynamo.md",
+    "url": "https://deadlock.wiki/Dynamo"
+  },
+  {
+    "title": "Fathom",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/fathom.md",
+    "url": "https://deadlock.wiki/Fathom"
+  },
+  {
+    "title": "Fortuna",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/fortuna.md",
+    "url": "https://deadlock.wiki/Fortuna"
+  },
+  {
+    "title": "Graf",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/graf.md",
+    "url": "https://deadlock.wiki/Graf"
+  },
+  {
+    "title": "Graves",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/graves.md",
+    "url": "https://deadlock.wiki/Graves"
+  },
+  {
+    "title": "Grey Talon",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/grey-talon.md",
+    "url": "https://deadlock.wiki/Grey_Talon"
+  },
+  {
+    "title": "Gunslinger",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/gunslinger.md",
+    "url": "https://deadlock.wiki/Gunslinger"
+  },
+  {
+    "title": "Haze",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/haze.md",
+    "url": "https://deadlock.wiki/Haze"
+  },
+  {
+    "title": "Heroes by release",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/heroes-by-release.md",
+    "url": "https://deadlock.wiki/Heroes_by_release"
+  },
+  {
+    "title": "Holliday",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/holliday.md",
+    "url": "https://deadlock.wiki/Holliday"
+  },
+  {
+    "title": "Infernus",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/infernus.md",
+    "url": "https://deadlock.wiki/Infernus"
+  },
+  {
+    "title": "Ivy",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/ivy.md",
+    "url": "https://deadlock.wiki/Ivy"
+  },
+  {
+    "title": "Kali",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/kali.md",
+    "url": "https://deadlock.wiki/Kali"
+  },
+  {
+    "title": "Kelvin",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/kelvin.md",
+    "url": "https://deadlock.wiki/Kelvin"
+  },
+  {
+    "title": "Lady Geist",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/lady-geist.md",
+    "url": "https://deadlock.wiki/Lady_Geist"
+  },
+  {
+    "title": "Lash",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/lash.md",
+    "url": "https://deadlock.wiki/Lash"
+  },
+  {
+    "title": "McGinnis",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/mcginnis.md",
+    "url": "https://deadlock.wiki/McGinnis"
+  },
+  {
+    "title": "Mina",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/mina.md",
+    "url": "https://deadlock.wiki/Mina"
+  },
+  {
+    "title": "Mirage",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/mirage.md",
+    "url": "https://deadlock.wiki/Mirage"
+  },
+  {
+    "title": "Mo & Krill",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/mo-krill.md",
+    "url": "https://deadlock.wiki/Mo_&_Krill"
+  },
+  {
+    "title": "Paige",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/paige.md",
+    "url": "https://deadlock.wiki/Paige"
+  },
+  {
+    "title": "Paradox",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/paradox.md",
+    "url": "https://deadlock.wiki/Paradox"
+  },
+  {
+    "title": "Pocket",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/pocket.md",
+    "url": "https://deadlock.wiki/Pocket"
+  },
+  {
+    "title": "Raven",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/raven.md",
+    "url": "https://deadlock.wiki/Raven"
+  },
+  {
+    "title": "Rem",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/rem.md",
+    "url": "https://deadlock.wiki/Rem"
+  },
+  {
+    "title": "Rutger",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/rutger.md",
+    "url": "https://deadlock.wiki/Rutger"
+  },
+  {
+    "title": "Seven",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/seven.md",
+    "url": "https://deadlock.wiki/Seven"
+  },
+  {
+    "title": "Shiv",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/shiv.md",
+    "url": "https://deadlock.wiki/Shiv"
+  },
+  {
+    "title": "Silver",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/silver.md",
+    "url": "https://deadlock.wiki/Silver"
+  },
+  {
+    "title": "Sinclair",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/sinclair.md",
+    "url": "https://deadlock.wiki/Sinclair"
+  },
+  {
+    "title": "Skyrunner",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/skyrunner.md",
+    "url": "https://deadlock.wiki/Skyrunner"
+  },
+  {
+    "title": "Swan",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/swan.md",
+    "url": "https://deadlock.wiki/Swan"
+  },
+  {
+    "title": "Thumper",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/thumper.md",
+    "url": "https://deadlock.wiki/Thumper"
+  },
+  {
+    "title": "Tokamak",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/tokamak.md",
+    "url": "https://deadlock.wiki/Tokamak"
+  },
+  {
+    "title": "Trapper",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/trapper.md",
+    "url": "https://deadlock.wiki/Trapper"
+  },
+  {
+    "title": "Vandal",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/vandal.md",
+    "url": "https://deadlock.wiki/Vandal"
+  },
+  {
+    "title": "Venator",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/venator.md",
+    "url": "https://deadlock.wiki/Venator"
+  },
+  {
+    "title": "Victor",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/victor.md",
+    "url": "https://deadlock.wiki/Victor"
+  },
+  {
+    "title": "Vindicta",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/vindicta.md",
+    "url": "https://deadlock.wiki/Vindicta"
+  },
+  {
+    "title": "Viscous",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/viscous.md",
+    "url": "https://deadlock.wiki/Viscous"
+  },
+  {
+    "title": "Vyper",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/vyper.md",
+    "url": "https://deadlock.wiki/Vyper"
+  },
+  {
+    "title": "Warden",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/warden.md",
+    "url": "https://deadlock.wiki/Warden"
+  },
+  {
+    "title": "Wraith",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/wraith.md",
+    "url": "https://deadlock.wiki/Wraith"
+  },
+  {
+    "title": "Wrecker",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/wrecker.md",
+    "url": "https://deadlock.wiki/Wrecker"
+  },
+  {
+    "title": "Yamato",
+    "imported": true,
+    "path": "docs/knowledge/_imports/wiki/heroes/yamato.md",
+    "url": "https://deadlock.wiki/Yamato"
+  }
+]

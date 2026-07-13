@@ -1,0 +1,30 @@
+metrics_to_run:
+  - custom_response_quality
+  - custom_directness
+  - custom_factual_grounding
+  - custom_uncertainty_behavior
+  - custom_formatting_quality
+  - custom_non_redundancy
+
+custom_metrics:
+  # Deadlock Coach uses a small set of LLM-judge metrics instead of one vague
+  # pass/fail score so the eval loop can catch the exact failure mode:
+  # directness, grounding, uncertainty handling, formatting, and redundancy.
+  - name: custom_response_quality
+    custom_function_file: metrics.py
+    custom_function_name: custom_response_quality
+  - name: custom_directness
+    custom_function_file: metrics.py
+    custom_function_name: custom_directness
+  - name: custom_factual_grounding
+    custom_function_file: metrics.py
+    custom_function_name: custom_factual_grounding
+  - name: custom_uncertainty_behavior
+    custom_function_file: metrics.py
+    custom_function_name: custom_uncertainty_behavior
+  - name: custom_formatting_quality
+    custom_function_file: metrics.py
+    custom_function_name: custom_formatting_quality
+  - name: custom_non_redundancy
+    custom_function_file: metrics.py
+    custom_function_name: custom_non_redundancy

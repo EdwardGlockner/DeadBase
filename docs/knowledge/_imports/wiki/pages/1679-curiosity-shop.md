@@ -1,0 +1,14 @@
+# Curiosity Shop
+
+Imported reference
+
+- kind: pages
+- source: Deadlock Wiki
+- url: https://deadlock.wiki/Curiosity_Shop
+- imported_at: 2026-07-10T07:07:36+00:00
+
+Reference extract:
+
+Redirect to:
+
+- The Curiosity Shop

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" role="img" aria-labelledby="title desc">
+  <title id="title">Deadbase chat orchestration</title>
+  <desc id="desc">Step-by-step architecture showing how a user chat turn is routed, grounded, answered, and returned with evidence and trace metadata.</desc>
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c1117"/>
+      <stop offset="100%" stop-color="#121923"/>
+    </linearGradient>
+    <linearGradient id="panel2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#171f2a"/>
+      <stop offset="100%" stop-color="#101720"/>
+    </linearGradient>
+    <marker id="arrow2" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#a8b7cd"/>
+    </marker>
+    <style>
+      .title { font: 700 34px 'SF Pro Display', 'Segoe UI', sans-serif; fill: #f5f7fb; }
+      .subtitle { font: 500 16px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #9db0c8; }
+      .step { fill: url(#panel2); stroke: #2a3748; stroke-width: 2; rx: 22; }
+      .step-strong { fill: #151c25; stroke: #ff6d5d; stroke-width: 2.5; rx: 22; }
+      .label { font: 700 20px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #f5f7fb; }
+      .body { font: 500 15px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #cad5e4; }
+      .small { font: 500 13px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #8ea2bc; }
+      .line { stroke: #a8b7cd; stroke-width: 3; fill: none; marker-end: url(#arrow2); }
+    </style>
+  </defs>
+
+  <rect width="1400" height="900" fill="url(#bg2)"/>
+  <text x="70" y="86" class="title">Chat Turn Orchestration</text>
+  <text x="70" y="118" class="subtitle">How a single message moves from the UI through routing, evidence, the root agent, and back as a structured reply.</text>
+
+  <rect x="94" y="188" width="280" height="118" class="step-strong"/>
+  <text x="122" y="238" class="label">1. User message</text>
+  <text x="122" y="268" class="body">Chat UI posts message + workspace context</text>
+
+  <rect x="470" y="188" width="320" height="138" class="step"/>
+  <text x="498" y="238" class="label">2. Route the request</text>
+  <text x="498" y="268" class="body">`semantic_router.py` infers family, scope,</text>
+  <text x="498" y="292" class="body">tool hints, analyst lanes, and follow-up context</text>
+
+  <rect x="886" y="168" width="396" height="178" class="step"/>
+  <text x="914" y="218" class="label">3. Build prompt support</text>
+  <text x="914" y="248" class="body">`agent_orchestration.py` prepares:</text>
+  <text x="914" y="276" class="body">- evidence anchors</text>
+  <text x="914" y="300" class="body">- confidence scaffolding</text>
+  <text x="914" y="324" class="body">- trace steps</text>
+
+  <rect x="94" y="430" width="280" height="178" class="step"/>
+  <text x="122" y="480" class="label">4. Deterministic retrieval</text>
+  <text x="122" y="510" class="body">Pull smallest grounded context:</text>
+  <text x="122" y="538" class="body">player telemetry, KB matches, patch notes,</text>
+  <text x="122" y="562" class="body">global hero/item/item-flow snapshots</text>
+
+  <rect x="470" y="410" width="320" height="218" class="step-strong"/>
+  <text x="498" y="460" class="label">5. Root agent run</text>
+  <text x="498" y="490" class="body">`adk_chat.py` sends the final prompt to</text>
+  <text x="498" y="514" class="body">`coach_agent` with workspace context and</text>
+  <text x="498" y="538" class="body">structured routing support</text>
+  <text x="498" y="578" class="body">Active internal delegates:</text>
+  <text x="498" y="606" class="body">data_analyst, knowledge_analyst, comparison_analyst</text>
+
+  <rect x="886" y="430" width="396" height="198" class="step"/>
+  <text x="914" y="480" class="label">6. Final response packaging</text>
+  <text x="914" y="510" class="body">Reply is enriched with:</text>
+  <text x="914" y="538" class="body">- structured answer envelope</text>
+  <text x="914" y="562" class="body">- evidence list and source types</text>
+  <text x="914" y="586" class="body">- trace report and confidence metadata</text>
+
+  <rect x="470" y="720" width="320" height="112" class="step"/>
+  <text x="498" y="770" class="label">7. UI render</text>
+  <text x="498" y="800" class="body">Chat answer, evidence chip count, and expandable source details</text>
+
+  <path d="M374 247 H470" class="line"/>
+  <path d="M790 257 H886" class="line"/>
+  <path d="M1084 346 V390 H790" class="line"/>
+  <path d="M470 520 H374" class="line"/>
+  <path d="M790 520 H886" class="line"/>
+  <path d="M678 628 V720" class="line"/>
+
+  <text x="70" y="870" class="small">Design intent: keep the user-facing conversation agentic and natural while keeping grounding, routing, and evidence attachment deterministic enough to debug and evaluate.</text>
+</svg>

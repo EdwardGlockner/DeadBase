@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860" role="img" aria-labelledby="title desc">
+  <title id="title">Deadbase system overview</title>
+  <desc id="desc">High-level architecture showing the chat UI, API server, orchestration, coach agent, tools, and knowledge and analytics sources.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1015"/>
+      <stop offset="100%" stop-color="#121821"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#191f29"/>
+      <stop offset="100%" stop-color="#141923"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff5c57"/>
+      <stop offset="100%" stop-color="#ff8a5b"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#9db0c8"/>
+    </marker>
+    <style>
+      .title { font: 700 34px 'SF Pro Display', 'Segoe UI', sans-serif; fill: #f5f7fb; }
+      .subtitle { font: 500 16px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #9db0c8; }
+      .section { font: 700 18px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #f5f7fb; letter-spacing: 0.08em; }
+      .label { font: 600 18px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #f5f7fb; }
+      .body { font: 500 15px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #c9d4e5; }
+      .small { font: 500 13px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #8da1bc; }
+      .box { fill: url(#panel); stroke: #2c3645; stroke-width: 2; rx: 24; }
+      .box-accent { fill: #161c26; stroke: #ff6c5f; stroke-width: 2.5; rx: 24; }
+      .box-soft { fill: #141a23; stroke: #233042; stroke-width: 2; rx: 20; }
+      .line { stroke: #9db0c8; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .line-soft { stroke: #667a97; stroke-width: 2.5; fill: none; marker-end: url(#arrow); stroke-dasharray: 10 8; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="860" fill="url(#bg)"/>
+  <rect x="42" y="34" width="1316" height="792" rx="30" fill="none" stroke="#202938" stroke-width="2"/>
+
+  <text x="70" y="94" class="title">Deadbase System Overview</text>
+  <text x="70" y="124" class="subtitle">Chat-first coaching workspace with an ADK root agent, deterministic evidence layer, and file-backed reference + analytics retrieval.</text>
+
+  <rect x="82" y="176" width="270" height="180" class="box-accent"/>
+  <rect x="112" y="198" width="210" height="18" rx="9" fill="url(#accent)" opacity="0.9"/>
+  <text x="112" y="250" class="section">PRODUCT SURFACE</text>
+  <text x="112" y="290" class="label">Web Chat UI</text>
+  <text x="112" y="320" class="body">Chat-first workspace</text>
+  <text x="112" y="344" class="body">Sidebar, history, settings, evidence chips</text>
+
+  <rect x="422" y="156" width="314" height="230" class="box"/>
+  <text x="450" y="206" class="section">API + RUNTIME</text>
+  <text x="450" y="246" class="label">`server.py`</text>
+  <text x="450" y="274" class="body">HTTP endpoints for chat, sync, summary, telemetry</text>
+  <text x="450" y="316" class="label">`adk_chat.py`</text>
+  <text x="450" y="344" class="body">Builds prompt support, injects workspace context,</text>
+  <text x="450" y="368" class="body">runs the root agent, returns structured reply payloads</text>
+
+  <rect x="806" y="136" width="512" height="270" class="box"/>
+  <text x="836" y="186" class="section">COACH CORE</text>
+  <text x="836" y="228" class="label">Root agent: `coach_agent`</text>
+  <text x="836" y="256" class="body">Owns final conversational answer, tone, and answer shape</text>
+  <rect x="836" y="288" width="135" height="84" class="box-soft"/>
+  <rect x="994" y="288" width="135" height="84" class="box-soft"/>
+  <rect x="1152" y="288" width="135" height="84" class="box-soft"/>
+  <text x="858" y="324" class="label">data_analyst</text>
+  <text x="858" y="348" class="small">player + global analytics</text>
+  <text x="1012" y="324" class="label">knowledge_analyst</text>
+  <text x="1012" y="348" class="small">KB + wiki + patches</text>
+  <text x="1170" y="324" class="label">comparison_analyst</text>
+  <text x="1170" y="348" class="small">player vs rank/meta</text>
+
+  <rect x="390" y="476" width="378" height="258" class="box"/>
+  <text x="420" y="526" class="section">DETERMINISTIC ORCHESTRATION</text>
+  <text x="420" y="566" class="label">`semantic_router.py`</text>
+  <text x="420" y="592" class="body">classifies need, scope, family, tool lanes</text>
+  <text x="420" y="632" class="label">`agent_orchestration.py`</text>
+  <text x="420" y="658" class="body">builds evidence graph, confidence, trace steps,</text>
+  <text x="420" y="682" class="body">and structured response envelope around the agent reply</text>
+
+  <rect x="838" y="476" width="224" height="118" class="box-soft"/>
+  <text x="864" y="520" class="label">Tool layer</text>
+  <text x="864" y="548" class="body">player tools</text>
+  <text x="864" y="572" class="body">global analytics tools</text>
+
+  <rect x="1094" y="476" width="224" height="118" class="box-soft"/>
+  <text x="1120" y="520" class="label">Instruction files</text>
+  <text x="1120" y="548" class="body">`app/instructions/*.md`</text>
+  <text x="1120" y="572" class="body">root + specialist prompts</text>
+
+  <rect x="838" y="626" width="224" height="148" class="box-soft"/>
+  <text x="864" y="670" class="label">Knowledge source</text>
+  <text x="864" y="698" class="body">`docs/knowledge/_imports/wiki`</text>
+  <text x="864" y="722" class="body">search + table query access</text>
+  <text x="864" y="746" class="body">for concept and patch grounding</text>
+
+  <rect x="1094" y="626" width="224" height="148" class="box-soft"/>
+  <text x="1120" y="670" class="label">Analytics + storage</text>
+  <text x="1120" y="698" class="body">local warehouse snapshots</text>
+  <text x="1120" y="722" class="body">hero stats, item flow, player curves</text>
+  <text x="1120" y="746" class="body">live API fallback when needed</text>
+
+  <path d="M352 266 H422" class="line"/>
+  <path d="M736 271 H806" class="line"/>
+  <path d="M966 406 V456 H768" class="line"/>
+  <path d="M580 386 V456" class="line"/>
+  <path d="M770 535 H838" class="line"/>
+  <path d="M770 620 H1094" class="line-soft"/>
+  <path d="M1062 535 H1094" class="line"/>
+  <path d="M950 594 V626" class="line"/>
+  <path d="M1206 594 V626" class="line"/>
+
+  <text x="82" y="800" class="small">Current reality: one root chat agent, three active internal specialists, deterministic evidence scaffolding, and file-backed + warehouse-backed retrieval.</text>
+</svg>

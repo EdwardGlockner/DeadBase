@@ -1,0 +1,14 @@
+# Vampire
+
+Imported reference
+
+- kind: pages
+- source: Deadlock Wiki
+- url: https://deadlock.wiki/Vampire
+- imported_at: 2026-07-10T07:14:36+00:00
+
+Reference extract:
+
+Redirect to:
+
+- Magical creatures#Vampires

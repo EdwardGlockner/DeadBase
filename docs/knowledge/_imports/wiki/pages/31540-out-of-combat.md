@@ -1,0 +1,14 @@
+# Out of combat
+
+Imported reference
+
+- kind: pages
+- source: Deadlock Wiki
+- url: https://deadlock.wiki/Out_of_combat
+- imported_at: 2026-07-10T07:11:42+00:00
+
+Reference extract:
+
+Redirect to:
+
+- Health Regen#Out of Combat Health Regen
