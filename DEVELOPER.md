@@ -174,6 +174,8 @@ That distinction matters for trust and future provenance rendering.
 
 ## Running the Project
 
+### macOS / Linux
+
 Install dependencies:
 
 ```bash
@@ -197,6 +199,42 @@ Start frontend:
 ```bash
 python3 -m http.server 4173 -d web
 ```
+
+### Windows (PowerShell)
+
+On Windows the venv interpreter lives at `.venv\Scripts\python.exe`, and
+`PYTHONPATH` is set per-session with `$env:PYTHONPATH` instead of an inline
+`VAR=value` prefix. Run each long-running server in its own PowerShell window.
+
+Install dependencies:
+
+```powershell
+uv sync
+```
+
+Bootstrap local storage:
+
+```powershell
+$env:PYTHONPATH = "src"
+.venv\Scripts\python.exe -m deadlock_coach bootstrap
+```
+
+Start backend (leave this terminal running):
+
+```powershell
+$env:PYTHONPATH = "src"
+.venv\Scripts\python.exe -m deadlock_coach serve --host 127.0.0.1 --port 3000
+```
+
+Start frontend (second terminal):
+
+```powershell
+.venv\Scripts\python.exe -m http.server 4173 -d web
+```
+
+Then open [http://127.0.0.1:4173/](http://127.0.0.1:4173/). For a quick health
+check, `curl.exe http://127.0.0.1:3000/api/health` (use `curl.exe`, since bare
+`curl` is a PowerShell alias for `Invoke-WebRequest`).
 
 Provider setup and local secret-handling notes live in [`docs/provider-setup.md`](/Users/eanu/Documents/deadlock-coach/docs/provider-setup.md).
 
