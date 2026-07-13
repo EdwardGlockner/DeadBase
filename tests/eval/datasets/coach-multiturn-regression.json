@@ -1,0 +1,481 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "multiturn_global_after_local_scope_correction",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 20 matches\n\nUser request:\nwhat hero has the highest win rate right now?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Right now in your last 20 matches, Shiv has the highest meaningful win rate."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "no i mean for everyone"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses the follow-up plus history to repair scope. Switches cleanly to a global meta answer, does not cling to the player's recent sample, and does not over-explain the correction."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "multiturn_rank_scope_followup",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "User request:\nwhat hero has the highest win rate right now?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Seven has the highest global win rate right now."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "how does the winrate look in eternus?"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Reads the follow-up as a rank-scoped continuation of the same meta question. Uses Eternus data if available and avoids padding with all-rank context unless clearly labeled."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "multiturn_billy_build_late_game_followup",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 20 matches\n\nUser request:\nwhat items do i usually build on billy?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Lane/early usually looks like Monster Rounds and Close Quarters. Mid game usually turns into Surge of Power and Warp Stone."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "what about even later?"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers only the late-game follow-up. Names later pickups or T4 finishers if supported and does not reset into a full build walkthrough."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "multiturn_shiv_t4_followup_after_late_game",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Shiv\n- Window: last 20 matches\n\nUser request:\nwhat about late game items?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Late game on your Shiv usually shifts into cooldown and utility."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "no i mean t4 items"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Repairs the scope from late-game items to true T4 items. Names only verified T4 finishers, does not include T3 items, and does not repeat the broader late-game answer."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "multiturn_4_8k_spike_clarifier",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "User request:\nwhat do people mean by 4.8k?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "It means a 4.8k investment spike."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "what do you mean?"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Clarifies the concept concretely on the follow-up. Explains the category-bar threshold and avoids generic circular wording."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "multiturn_patch_followup_for_shiv",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "User request:\ncan you explain the latest patch?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "The latest patch adjusted several heroes and items."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "what happened to shiv?"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses the prior patch thread and answers the Shiv-specific follow-up directly from grounded patch context. Does not restart into a full patch explainer."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "multiturn_generic_hero_then_player_scope_switch",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n\nUser request:\nwhat are late game items on shiv?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Generic Shiv late game usually adds bigger spirit scaling and real finishers."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "okay but what about my own shiv games?"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Recognizes the scope switch from generic hero theory to player-specific telemetry. Moves into the user's own Shiv sample cleanly and labels any thin-sample caveat briefly."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "multiturn_no_account_should_not_pivot_to_theory",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Current workspace context:\n- No active player or account is selected.\n\nUser request:\nwhat do i usually build on billy?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "I do not have an active player selected for that telemetry question."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "okay then just tell me the common billy build"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses the follow-up to shift from blocked player-specific telemetry to a generic Billy build answer. Does not stay stuck on the missing-account guardrail."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "multiturn_boon_followup_no_item_spike_drift",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "User request:\nwhat are boons?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Boons are soul-based level rewards."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "so they are not items?"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers the clarification directly: no, boons are not items. Does not drift into unrelated spike theory or broad build talk."
+          }
+        }
+      ]
+    }
+  ]
+}

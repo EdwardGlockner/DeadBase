@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="920" viewBox="0 0 1440 920" role="img" aria-labelledby="title desc">
+  <title id="title">Deadbase knowledge and data flow</title>
+  <desc id="desc">Architecture diagram showing raw sources, sync and normalization, local storage, and the tools that expose knowledge and analytics to the coach.</desc>
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0f14"/>
+      <stop offset="100%" stop-color="#121823"/>
+    </linearGradient>
+    <linearGradient id="panel3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#16202a"/>
+      <stop offset="100%" stop-color="#111821"/>
+    </linearGradient>
+    <marker id="arrow3" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#a9b7cc"/>
+    </marker>
+    <style>
+      .title { font: 700 34px 'SF Pro Display', 'Segoe UI', sans-serif; fill: #f5f7fb; }
+      .subtitle { font: 500 16px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #9db0c8; }
+      .box { fill: url(#panel3); stroke: #273547; stroke-width: 2; rx: 22; }
+      .box-strong { fill: #151d26; stroke: #ff6e60; stroke-width: 2.5; rx: 22; }
+      .label { font: 700 19px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #f5f7fb; }
+      .body { font: 500 15px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #cad5e4; }
+      .small { font: 500 13px 'SF Pro Text', 'Segoe UI', sans-serif; fill: #8da1bc; }
+      .line { stroke: #a9b7cc; stroke-width: 3; fill: none; marker-end: url(#arrow3); }
+      .line-dash { stroke: #6c819e; stroke-width: 2.5; fill: none; stroke-dasharray: 10 8; marker-end: url(#arrow3); }
+    </style>
+  </defs>
+
+  <rect width="1440" height="920" fill="url(#bg3)"/>
+  <text x="68" y="86" class="title">Knowledge And Data Flow</text>
+  <text x="68" y="118" class="subtitle">Where the coach gets facts today: imported wiki/reference pages, synced analytics snapshots, tracked-player history, and live API fallback.</text>
+
+  <rect x="86" y="176" width="286" height="150" class="box"/>
+  <text x="114" y="226" class="label">Raw sources</text>
+  <text x="114" y="256" class="body">Deadlock Wiki pages and tables</text>
+  <text x="114" y="280" class="body">Deadlock API analytics endpoints</text>
+  <text x="114" y="304" class="body">Patch feeds and tracked account sync</text>
+
+  <rect x="462" y="156" width="320" height="190" class="box-strong"/>
+  <text x="490" y="206" class="label">Sync + normalize</text>
+  <text x="490" y="236" class="body">CLI and service helpers pull raw data,</text>
+  <text x="490" y="260" class="body">persist snapshots, and normalize useful tables</text>
+  <text x="490" y="300" class="body">Examples: hero stats, item stats, item flow,</text>
+  <text x="490" y="324" class="body">player curves, imported wiki markdown</text>
+
+  <rect x="872" y="136" width="226" height="228" class="box"/>
+  <text x="900" y="186" class="label">Reference store</text>
+  <text x="900" y="216" class="body">`docs/knowledge/_imports/wiki`</text>
+  <text x="900" y="244" class="body">hero pages</text>
+  <text x="900" y="268" class="body">item pages</text>
+  <text x="900" y="292" class="body">general system pages</text>
+
+  <rect x="1142" y="136" width="226" height="228" class="box"/>
+  <text x="1170" y="186" class="label">Warehouse</text>
+  <text x="1170" y="216" class="body">SQLite + raw snapshots</text>
+  <text x="1170" y="244" class="body">analytics tables</text>
+  <text x="1170" y="268" class="body">match history</text>
+  <text x="1170" y="292" class="body">patch events</text>
+
+  <rect x="252" y="480" width="340" height="176" class="box"/>
+  <text x="280" y="530" class="label">Knowledge-facing tools</text>
+  <text x="280" y="560" class="body">`search_knowledge_base`</text>
+  <text x="280" y="584" class="body">`search_reference_imports`</text>
+  <text x="280" y="608" class="body">`query_reference_tables`</text>
+
+  <rect x="654" y="480" width="340" height="176" class="box"/>
+  <text x="682" y="530" class="label">Analytics-facing tools</text>
+  <text x="682" y="560" class="body">`get_global_hero_stats`</text>
+  <text x="682" y="584" class="body">`get_global_item_stats`</text>
+  <text x="682" y="608" class="body">`get_global_item_flow`</text>
+  <text x="682" y="632" class="body">`get_player_profile` / curves / recent paths</text>
+
+  <rect x="1056" y="460" width="300" height="216" class="box-strong"/>
+  <text x="1084" y="510" class="label">Coach consumption</text>
+  <text x="1084" y="540" class="body">`coach_agent` and internal analysts query tools,</text>
+  <text x="1084" y="564" class="body">then `agent_orchestration.py` attaches evidence,</text>
+  <text x="1084" y="588" class="body">trace steps, and confidence framing</text>
+  <text x="1084" y="628" class="body">Goal: grounded chat answers, not dashboard reports</text>
+
+  <rect x="548" y="760" width="360" height="110" class="box"/>
+  <text x="576" y="810" class="label">Current repository posture</text>
+  <text x="576" y="840" class="body">Imported wiki/reference material and analytics snapshots are the real knowledge surface the coach should search first.</text>
+
+  <path d="M372 251 H462" class="line"/>
+  <path d="M782 236 H872" class="line"/>
+  <path d="M782 286 H1142" class="line"/>
+  <path d="M985 364 V438 H422" class="line-dash"/>
+  <path d="M1240 364 V438 H824" class="line"/>
+  <path d="M592 568 H654" class="line"/>
+  <path d="M994 568 H1056" class="line"/>
+  <path d="M1206 676 V726 H908" class="line"/>
+  <path d="M406 326 V456" class="line-dash"/>
+  <path d="M1240 326 V456" class="line-dash"/>
+
+  <text x="68" y="894" class="small">After the recent cleanup, handwritten curated notes no longer outrank raw wiki imports by design. The intended long-term path is better sync, better table extraction, and better tool use rather than more prompt hardcoding.</text>
+</svg>

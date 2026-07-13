@@ -1,0 +1,156 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "coach_greeting_with_context",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 10 matches\n\nUser request:\nHello"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Short greeting. Mentions the loaded player context lightly. Offers a few coaching lanes without sounding like a long menu."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "hero_overview_recent_pool",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 10 matches\n\nUser request:\nWhat heroes do I usually play?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Grounded answer from local telemetry. Identifies Billy as the current main in the recent sample and summarizes the recent hero pool without hallucinating external meta."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "focus_short_checklist",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 10 matches\n\nUser request:\nAnswer with a short checklist: what should I fix first on Billy?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Short checklist format. Prioritizes fewer deaths, cleaner Billy repetition, and earlier/more consistent core timing. No giant blob."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "unsupported_global_popularity",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 10 matches\n\nUser request:\nWhat heroes are most popular right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "States briefly that true global popularity is not available yet. Falls back to the user's local hero popularity instead of bluffing."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "larger_local_sample",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 200 matches\n\nUser request:\nCan you use a much bigger local sample?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Confirms the larger local sample can be used. Mentions broad trends are stronger than fully hydrated match detail if hydration is thin."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "knowledge_topics_visibility",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 10 matches\n\nUser request:\nWhat knowledge topics do you currently have loaded?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Lists the currently loaded local knowledge groups and topics clearly, including fundamentals, builds, and glossary."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "player_specific_question_without_account",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nWhat heroes do I usually play?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "States clearly that there is no synced player sample attached yet, keeps the answer short, and tells the user to sign in or select an account. Does not invent a hero pool."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "timing_question_should_stay_narrow",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 10 matches\n\nUser request:\nIs Rising Ram late for me on Billy?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers the timing question directly in the first sentence, uses local timing evidence, and avoids turning the answer into a giant general build lecture."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,870 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "basic_greeting_with_player_context",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 20 matches\n\nUser request:\nhello"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Short, natural greeting. Uses the loaded player context lightly, avoids a long capability menu, and sounds like one sharp coach rather than a product tour."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_recent_hero_overview",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 20 matches\n\nUser request:\nwhat heroes do i usually play?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Grounded recent-pool answer using local telemetry. Names the main repeated hero and summarizes the pool briefly without inventing global meta."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_billy_build_walkthrough",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 20 matches\n\nUser request:\nwhat items do i usually build on billy?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers like a player walkthrough, not an abstract analyst report. Uses lane/early, mid, and late language. Mentions stable core and late finishers if supported."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_billy_late_game_followup",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 20 matches\n\nUser request:\nwhat items do i usually build on billy?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "On Billy, your usual build should be explained as a lane/early path, a mid-game core, and then later finishers."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "what do i do even later into the games"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Stays narrow on the late-game follow-up. Names later items or finishers clearly if the telemetry supports them. Does not reset into a full build explainer."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_boon_definition",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\ndo you know what boons are?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Knowledge-grounded definition. Explains boons as soul-based level rewards, not item purchases, and avoids made-up systems or objective-buff confusion."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_6_4k_spirit_table_fact",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nhow much bonus spirit do you get after 6.4k investment"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers this as a grounded table fact. Gives the concrete spirit bonus from the imported reference table, and does not drift into generic build talk."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_named_hero_reference_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat do high-mmr players build on shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses the named hero correctly, keeps the answer in grounded global or rank-scoped build context, and does not drift into a different hero or the active player's sample."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_build_identity_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 20 matches\n\nUser request:\nis it damage, spirit or vitality?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses build telemetry plus KB grounding. Distinguishes slot family from fight function, avoids fake certainty, and does not reduce the whole build to one item label."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_spike_question_4_8k",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 20 matches\n\nUser request:\nwhat spike do i get first, 4.8k?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Treats `spike` as an in-game power turn, not rank or MMR. Grounds the meaning in KB guidance, then explains the first real supported build spike from telemetry."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_spike_clarifier_followup",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 20 matches\n\nUser request:\nwhat spike do i get first, 4.8k?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Your first real spike should be read as an in-game power turn, not as a rank label."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "what do you mean?"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Keeps the follow-up grounded in the same spike/build topic. Does not pivot to rank/MMR. Clarifies the concept and ties it back to Billy's local build path."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_spirit_damage_definition",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat is spirit damage?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses KB grounding for a concise theory answer. Explains spirit damage as an in-game damage category or scaling concept, not as a random item list, and avoids generic filler."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_vitality_definition",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat does vitality mean in deadlock?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses KB grounding for a concise definition. Explains vitality as a build family or survivability/commit-oriented investment in context, and does not confuse it with unrelated systems or telemetry."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_player_specific_without_account",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat heroes do i usually play?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Short missing-context answer. Says there is no synced player sample attached yet and tells the user to sign in or select an account. Does not invent telemetry."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_global_popularity_guardrail",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 20 matches\n\nUser request:\nwhat heroes are most popular right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses global hero stats if available, preferring synced local analytics when present. Names the current popularity leader cleanly, makes the scope clear, and does not fall back to one player's local sample unless no global data is available."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_billy_warp_stone_read",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 20 matches\n\nUser request:\nso does warp stone mean im going vitality first?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses KB plus telemetry together. Explains that Warp Stone is a vitality-slot item but can still function as engage or commit support on Billy, so the read should be based on the whole turn rather than one slot label."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_named_hero_theory_without_account",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Hero focus: Billy\n\nUser request:\nwhat kind of fights does billy want?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers from the local KB instead of generic product copy. Describes Billy as a close-range commit or front-line brawler and keeps the answer concise and grounded."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_billy_winrate_read",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 20 matches\n\nUser request:\nam i actually winning on billy?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers from verified local outcomes first. States Billy's recent win-rate or resolved record directly, keeps the answer narrow, and does not drift into a generic build explanation."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_patch_anchor_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat changed this patch?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses a synced patch note if one exists, otherwise falls back to the live patch feed. Explains the actual latest patch rather than refusing by default, and keeps the answer grounded in explicit changes."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_meta_guardrail_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat is the meta right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses global hero stats or grounded patch context if available, preferring synced local analytics when present. Keeps the answer concise, avoids bluffing a full tier list, and distinguishes global reads from local coaching reads."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_full_history_hero_pool_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 20 matches\n\nUser request:\ncan you look at all games i have ever played, what heroes do i usually play?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses the full local sample when available instead of blindly answering from the default recent window. Makes the sample scope clear and names the main long-run heroes directly."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_investment_spike_definition",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\ncan you explain what a 4.8k investment spike is?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses KB grounding for a concise concept answer. Treats a 4.8k investment spike as an in-game power turn tied to investment bars or family spend such as weapon, spirit, or vitality, not just 'one expensive item purchase', and avoids tacking on a generic coaching outro."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_4_8k_spirit_definition",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat do people mean by 4.8k spirit?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses KB grounding for a concise systems answer. Explains that 4.8k spirit means 4.8k souls invested into the spirit category bar, not just one spirit item, and makes the threshold bonus the main reason it matters."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_4_8k_not_one_item_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nis 4.8k investment about one item or category investment?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses KB grounding and answers directly that this is mainly about category investment and the threshold bonus, while allowing that one item can be the final push over the breakpoint."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_3_2k_spirit_definition",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat do people mean by 3.2k spirit?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses KB grounding for a concise systems answer. Treats 3.2k spirit as an earlier spirit-family investment step or earlier threshold language, keeps the category-bar framing, and does not flatten it into one specific item."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_6_4k_definition",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat does 6.4k mean in deadlock?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses KB grounding for a concise concept answer. Explains that 6.4k usually points to a true Tier 4 or late finisher price band, keeps that separate from the 4.8k investment-bar concept, and avoids turning the answer into a mini-essay."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_weapon_investment_definition",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat does weapon investment mean?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses KB grounding for a short answer. Explains weapon investment as category spend into the weapon family or orange bar, not as a single item callout or a broad theory essay."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_global_pickrate_winrate_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat hero has the highest pickrate and winrate right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses global hero stats if available, preferring synced local analytics when present. Answers the pickrate and winrate parts directly, makes the scope clear, and does not dodge into local telemetry."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_global_rank_winrate_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat hero has the highest win rate in eternus right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses rank-filtered global hero stats if available. Answers the Eternus-scoped question directly, does not pad the answer with all-rank context, and keeps the wording concise."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_global_popular_shiv_build_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat is the most popular build on shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses the global item-flow/build branch tool if available. Answers stage by stage, stays chatty and concise, and does not drift into a generic coaching-plan outro."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_global_shiv_late_game_items_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat are late game items on shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses one clear scope, preferably global build flow or grounded hero guidance, instead of mixing a loaded player's sample with generic Shiv theory. If both later pickups and true T4 finishers are visible, separates them cleanly."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_global_shiv_late_game_items_with_active_player_context",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Window: last 20 matches\n\nUser request:\nwhat are late game items on shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Even with an active player loaded, treats this as a generic Shiv question unless the user asks about their own games. Uses one primary scope, avoids silently pivoting into the active player's sample, and separates later pickups from true T4 finishers when both are relevant."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_global_shiv_t4_items_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat are t4 items on shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers the T4 question narrowly. Names only true Tier 4 finishers if grounded evidence exists, keeps lower-tier late pickups out of the main answer, and avoids blending local player paths with generic hero theory unless labeled as secondary context."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_no_abstract_coaching_slogan",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n- Hero focus: Billy\n- Window: last 20 matches\n\nUser request:\nwhat items do i usually build on billy?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers the build question directly and does not use abstract filler like 'the next best coaching step' or other generic coaching slogans."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_global_item_meta_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat items are most common right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses global item stats if available, preferring synced local analytics when present. Answers with current common items directly, makes the scope clear, and does not pretend one player's local build sample is the global item meta."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_global_build_branch_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat does the common billy build branch look like right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses the global item-flow/build-branch tool if available, preferably from synced local analytics. Answers stage by stage instead of dumping raw node data, and makes it clear this is broader build-branch context rather than one player's recent sample."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_player_curve_question",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Current workspace context:\n- Active player label: EEE\n- Active account id: 303017110\n\nUser request:\nwhen do my games usually start to fall off?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses the player performance curve if available, preferably from synced local analytics. Anchors the answer to early/mid/late checkpoints or percent buckets and does not answer with vague generic coaching language."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_no_generic_coaching_outro",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat are boons?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Gives a short grounded definition without appending a generic line about cleaner signals, next games, or a default coaching next step."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_global_winrate_no_alt_interpretation",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat hero has the highest win rate right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers this as a global current-meta question. Gives the best grounded global answer first, and does not tack on speculative side text like 'if you mean among heroes I play' when the question is already clear."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_rank_scoped_winrate_no_all_rank_padding",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nhow does the winrate look in Eternus 6 right now?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Treats this as a rank-scoped global meta question. Uses Eternus 6 or the closest grounded rank-scoped cohort if available, and does not pad the answer with all-rank context unless the rank-specific data is missing and clearly labeled."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_pro_billy_build_uses_rank_proxy",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat do pros build on Billy?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Treats `pros` as a strongest-grounded global build-flow question, not a player-specific one. If true pro-only data is unavailable, it prefers a strong rank-scoped proxy such as Eternus 6, stays on Billy, and answers with a clean build-flow walkthrough rather than drifting to another hero."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_shiv_t4_precision",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\nwhat true T4 items do Shiv players usually finish on late?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Answers this as a T4-specific question. Names only verified T4 finishers or clearly says if the evidence is too thin, and does not mislabel T2 or T3 items as T4s."
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_id": "basic_latest_patch_shiv_direct",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "User request:\ncan you explain the latest patch and what happened to Shiv?"
+          }
+        ]
+      },
+      "rubrics": [
+        {
+          "rubricId": "expected_response",
+          "rubricContent": {
+            "textProperty": "Uses patch grounding first and answers directly instead of refusing when patch evidence is available. Summarizes the latest patch, highlights the Shiv-relevant changes, and keeps the answer concise."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deadbase</title>
+    <link rel="icon" type="image/png" href="./assets/deadbase-monogram.png" />
+    <link rel="stylesheet" href="./styles.css?v=46" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar__top">
+          <div class="brand">
+            <div class="brand__mark">
+              <img src="./assets/deadbase-monogram.png" alt="Deadbase monogram" />
+            </div>
+            <div class="brand__copy">
+              <div class="brand__title">Deadbase</div>
+            </div>
+          </div>
+
+          <button class="sidebar__new" id="new-session" type="button">New chat</button>
+        </div>
+
+        <nav class="sidebar__nav" id="sidebar-nav"></nav>
+        <div class="sidebar__bottom" id="sidebar-bottom"></div>
+      </aside>
+
+      <div class="workspace">
+        <header class="workspace__header" id="workspace-header">
+          <div class="workspace__heading">
+            <div class="workspace__title" id="screen-title">Coach</div>
+            <div class="workspace__subtitle" id="screen-subtitle">Ask about heroes, win rates, builds, patches, matchups, and what to test next.</div>
+          </div>
+
+          <div class="workspace__header-actions">
+            <div class="workspace__meta" id="workspace-meta"></div>
+            <div id="account-dock"></div>
+          </div>
+        </header>
+
+        <main class="workspace__body" id="screen-host"></main>
+      </div>
+    </div>
+
+    <script src="./app.js?v=47"></script>
+  </body>
+</html>
