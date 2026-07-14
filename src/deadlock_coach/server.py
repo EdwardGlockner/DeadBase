@@ -366,6 +366,7 @@ def _build_handler(settings: Settings) -> type[BaseHTTPRequestHandler]:
                                 country_code=profile_payload.get("country_code"),
                                 matches_played_last_30d=profile_payload.get("matches_played_last_30d"),
                                 last_team_avg_badge=profile_payload.get("last_team_avg_badge"),
+                                last_team_avg_rank=profile_payload.get("last_team_avg_rank"),
                             )
 
                         result = sync_account(

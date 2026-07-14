@@ -203,6 +203,32 @@ def resolve_rank_badge_range(
     )
 
 
+def rank_badge_label(
+    settings: Settings,
+    badge_value: int | None,
+    client: DeadlockApiClient | None = None,
+) -> str | None:
+    if badge_value is None:
+        return None
+
+    try:
+        ranks = _load_ranks(settings, client=client)
+    except RuntimeError:
+        ranks = {}
+
+    tier = int(badge_value) // 10
+    subtier = int(badge_value) % 10
+    by_tier = {rank.tier: rank for rank in ranks.values()}
+    rank = by_tier.get(tier)
+    if rank is None:
+        return None
+    if rank.tier <= 0 or subtier <= 0:
+        return rank.name
+    if 1 <= subtier <= 6:
+        return f"{rank.name} {subtier}"
+    return rank.name
+
+
 def _load_item_payload(settings: Settings, item_id: int, client: DeadlockApiClient | None = None) -> Any:
     cache_path = _assets_dir(settings) / f"item-{item_id}.json"
     try:

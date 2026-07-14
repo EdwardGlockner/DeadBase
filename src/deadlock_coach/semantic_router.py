@@ -346,8 +346,6 @@ def build_routing_decision(
         rationale += " Start with the local KB before freeform theory when the answer is about game systems or concepts."
 
     specialists: list[str] = ["coach_agent"]
-    if need.family in {"mirror", "global_popularity"} or (need.family == "meta" and need.needs_global_analytics):
-        specialists.append("comparison_analyst")
 
     return RoutingDecision(
         family=need.family,

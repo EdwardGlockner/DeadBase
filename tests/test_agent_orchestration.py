@@ -35,7 +35,7 @@ class AgentOrchestrationTests(unittest.TestCase):
         self.assertEqual(envelope.trace.selected_specialists, ["coach_agent"])
         self.assertIn("knowledge_base_lookup", envelope.structured_output.routing.tool_hints)
 
-    def test_envelope_with_account_adds_kb_specialist_for_spike_question(self) -> None:
+    def test_envelope_with_account_adds_kb_and_build_tool_hints_for_spike_question(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             settings = Settings(project_root=root)
@@ -392,7 +392,7 @@ class AgentOrchestrationTests(unittest.TestCase):
             )
 
         self.assertEqual(envelope.structured_output.routing.family, "global_popularity")
-        self.assertIn("comparison_analyst", envelope.trace.selected_specialists)
+        self.assertEqual(envelope.trace.selected_specialists, ["coach_agent"])
         self.assertIsNotNone(envelope.structured_output.comparison)
         self.assertIsNone(envelope.structured_output.practice_plan)
         self.assertIsNone(envelope.structured_output.artifact_outline)
@@ -409,9 +409,9 @@ class AgentOrchestrationTests(unittest.TestCase):
             )
 
         self.assertEqual(envelope.structured_output.routing.family, "mirror")
-        self.assertIn("comparison_analyst", envelope.trace.selected_specialists)
+        self.assertEqual(envelope.trace.selected_specialists, ["coach_agent"])
         self.assertIsNotNone(envelope.structured_output.comparison)
-        self.assertIn("Suggested specialists: comparison_analyst", build_prompt_support(envelope))
+        self.assertIn("Suggested tool lanes:", build_prompt_support(envelope))
 
 
 if __name__ == "__main__":

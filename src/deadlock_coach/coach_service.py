@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from deadlock_coach.asset_service import detect_hero_name_in_text, hero_label, item_asset, item_label, item_tier
+from deadlock_coach.asset_service import detect_hero_name_in_text, hero_label, item_asset, item_label, item_tier, rank_badge_label
 from deadlock_coach.config import Settings
 from deadlock_coach.knowledge_base import knowledge_content_lines, knowledge_note_excerpt, knowledge_query_terms, search_local_knowledge
 from deadlock_coach.message_hints import normalized_message
@@ -132,7 +132,7 @@ def _format_item_phase_summary(settings: Settings, items: list[ItemTiming]) -> s
 
     parts: list[str] = []
     for phase, labels in phases:
-        phase_name = "early core" if phase == "early" else "midgame pivots" if phase == "mid" else "late anchors"
+        phase_name = "early core" if phase == "early" else "midgame pivots" if phase == "mid" else "late pickups"
         parts.append(f"{phase_name}: {', '.join(labels[:3])}")
     return "; ".join(parts)
 
@@ -1095,6 +1095,7 @@ def list_tracked_accounts(settings: Settings) -> list[dict[str, Any]]:
             "country_code": row["country_code"],
             "matches_played_last_30d": row["matches_played_last_30d"],
             "last_team_avg_badge": row["last_team_avg_badge"],
+            "last_team_avg_rank": rank_badge_label(settings, row["last_team_avg_badge"]),
         }
         for row in rows
     ]

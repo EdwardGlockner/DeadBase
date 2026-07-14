@@ -246,7 +246,7 @@ def _confidence(
         return ConfidenceReport(
             level="high",
             score=0.88,
-            rationale="Recent player-specific data is available with multiple telemetry anchors and at least one hydrated match.",
+            rationale="Recent player-specific data is available with multiple telemetry signals and at least one hydrated match.",
         )
     if summary.total_matches >= 4 and len(player_evidence) >= 2:
         return ConfidenceReport(
@@ -344,9 +344,6 @@ def build_prompt_support(envelope: CoachResponseEnvelope) -> str:
         )
     if envelope.structured_output.routing.analyst_lanes:
         lines.append(f"- Suggested internal lanes: {', '.join(envelope.structured_output.routing.analyst_lanes)}")
-    specialist_hints = [name for name in envelope.structured_output.routing.specialists if name != "coach_agent"]
-    if specialist_hints:
-        lines.append(f"- Suggested specialists: {', '.join(specialist_hints)}")
     if envelope.structured_output.routing.tool_hints:
         lines.append(f"- Suggested tool lanes: {', '.join(envelope.structured_output.routing.tool_hints)}")
     if envelope.confidence.level == "low" and (
@@ -363,7 +360,7 @@ def build_prompt_support(envelope: CoachResponseEnvelope) -> str:
     if family == "timing" and "global_item_flow" in envelope.structured_output.routing.tool_hints:
         lines.append("- For pro, top-player, or high-MMR build questions, prefer the strongest grounded rank-scoped build-flow proxy first, usually Eternus 6 when available.")
     if family == "timing":
-        lines.append("- Keep build-phase language anchored on lane/early, mid, and late. If the user asked for T4s, name only verified T4 finishers.")
+        lines.append("- Keep build-phase language focused on lane/early, mid, and late. If the user asked for T4s, name only verified T4 finishers.")
     if family in {"patches", "meta", "global_popularity"}:
         lines.append("- For global or rank-scoped meta questions, answer the exact requested scope first and avoid padding with unrelated local-player alternatives.")
 
@@ -403,7 +400,7 @@ def build_response_envelope(
     needs_player_summary = bool(
         context.account_id is not None
         and (
-            family in {"greeting", "clarify"}
+            family == "clarify"
             or (routing.information_need is not None and routing.information_need.needs_player_telemetry)
         )
     )
@@ -491,8 +488,8 @@ def build_response_envelope(
             player_evidence_ids.append(
                 add_evidence(
                     "player_telemetry",
-                    "Anchor item",
-                    f"{item_label(settings, top_item.item_id)} is showing up as a recurring {_item_phase_label(top_item.avg_bought_at_s)}-game anchor.",
+                    "Recurring item",
+                    f"{item_label(settings, top_item.item_id)} is showing up repeatedly in the {_item_phase_label(top_item.avg_bought_at_s)} game.",
                     trust="medium",
                 )
             )
@@ -502,7 +499,7 @@ def build_response_envelope(
                 name="load_player_summary",
                 kind="retrieval",
                 duration_ms=round((perf_counter() - player_step_started) * 1000, 2),
-                detail="Loaded the recent player summary and the strongest repeat hero/item anchors.",
+                detail="Loaded the recent player summary and the strongest repeat hero/item signals.",
                 tool_calls=["summarize_account"],
                 evidence_ids=player_evidence_ids,
             )
@@ -607,16 +604,16 @@ def build_response_envelope(
                 status="ok" if patch_evidence_ids else "limited",
                 duration_ms=round((perf_counter() - patch_step_started) * 1000, 2),
                 detail=(
-                    f"Loaded {len(patch_evidence_ids)} synced patch anchors."
+                    f"Loaded {len(patch_evidence_ids)} synced patch notes."
                     if patch_evidence_ids
-                    else "No synced patch anchors matched the request."
+                    else "No synced patch notes matched the request."
                 ),
                 tool_calls=["patch_event"],
                 evidence_ids=patch_evidence_ids,
             )
         )
 
-    if "comparison_analyst" in routing.specialists:
+    if family in {"mirror", "global_popularity"} or (family == "meta" and "global_hero_stats" in routing.tool_hints):
         specialist_started = perf_counter()
         top_hero_name = hero_label(settings, summary.hero_performance[0].hero_id) if summary is not None and summary.hero_performance else None
         top_item_name = item_label(settings, summary.item_timings[0].item_id) if summary is not None and summary.item_timings else None
@@ -638,12 +635,12 @@ def build_response_envelope(
                 else "player-vs-pattern comparison"
             ),
             summary=(
-                f"Use {top_hero_name or 'the current hero or build'} as the local anchor, then compare it against broader hero, rank, or build context."
+                f"Use {top_hero_name or 'the current hero or build'} as the local reference point, then compare it against broader hero, rank, or build context."
                 if summary is not None and family == "mirror"
                 else "Answer from broader global or rank-scoped context first, then only add the player side if the question actually asks for it."
             ),
             player_anchor=(
-                f"Current local anchor: {top_hero_name}" + (f" with {top_item_name} as a repeated build checkpoint." if top_item_name else ".")
+                f"Current local reference point: {top_hero_name}" + (f" with {top_item_name} as a repeated build checkpoint." if top_item_name else ".")
                 if summary is not None
                 else None
             ),
@@ -665,7 +662,7 @@ def build_response_envelope(
         )
         steps.append(
             TraceStep(
-                name="comparison_analyst",
+                name="comparison_capability",
                 kind="synthesis",
                 duration_ms=round((perf_counter() - specialist_started) * 1000, 2),
                 detail=comparison.summary,
@@ -695,7 +692,7 @@ def build_response_envelope(
                 add_evidence(
                     "agent_inference",
                     "Hero diagnosis",
-                    f"The current coaching read is anchored on {focus_hero_name} because it owns the heaviest recent volume.",
+                    f"The current coaching read is centered on {focus_hero_name} because it owns the heaviest recent volume.",
                     trust="medium",
                 )
             )
@@ -834,7 +831,7 @@ def build_response_envelope(
             matchup = MatchupAssessment(
                 status="limited",
                 summary="The local backend can frame matchup questions, but matchup joins are still thin without hydrated match metadata.",
-                next_step="Hydrate more matches and use the selected hero as the first matchup anchor.",
+                next_step="Hydrate more matches and use the selected hero as the first matchup reference point.",
                 limitation="Hydrated match count is still too low for strong matchup claims.",
             )
             status = "limited"
@@ -856,9 +853,9 @@ def build_response_envelope(
             )
         )
 
-    if "coach_agent" in routing.specialists and family in {"focus", "progress", "experiment", "hero_review", "mirror", "matchups"}:
+    if family in {"focus", "progress", "experiment", "hero_review", "mirror", "matchups"}:
         specialist_started = perf_counter()
-        focus_area = "stabilize hero and build anchors" if summary is not None else "general coaching mode"
+        focus_area = "stabilize hero and build patterns" if summary is not None else "general coaching mode"
         if family in {"timing", "experiment"}:
             focus_area = "stabilize one build checkpoint"
         elif family in {"hero_overview", "reliable_hero", "hero_review", "winrate"}:

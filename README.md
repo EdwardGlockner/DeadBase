@@ -18,12 +18,10 @@ The current MVP direction is:
 
 - coach-first UI, closer to ChatGPT than a dashboard
 - dark, minimal, premium workspace feel
-- root coaching agent with direct tools and light orchestration behind it
+- single coaching agent with direct tools and light orchestration behind it
 - evidence-backed responses instead of vague motivational chat
 - local knowledge base plus imported Deadlock Wiki reference material
 - portfolio-grade agent architecture, evals, and observability
-
-Other surfaces such as Hero Lab, Builds, Pro Mirror, Reports, and Experiments still matter, but the main interaction model is the coaching thread.
 
 ## Current Architecture
 
@@ -46,7 +44,6 @@ The current ADK stack is centered around:
 
 - `coach_agent` as the user-facing root agent
 - direct tools for telemetry, builds, reference lookup, and KB retrieval
-- placeholder specialist files for player profile, hero pool, builds, comparison, matchups, reports, experiments, VOD review, and knowledge-base analysis while the root coach is the main focus
 
 Relevant files:
 

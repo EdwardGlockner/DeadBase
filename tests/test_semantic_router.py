@@ -73,13 +73,15 @@ class SemanticRouterTests(unittest.TestCase):
         self.assertEqual(routing.family, "global_popularity")
         self.assertIn("global_hero_stats", routing.tool_hints)
         self.assertNotIn("hero_pool_analysis", routing.tool_hints)
-        self.assertIn("comparison_analyst", routing.specialists)
+        self.assertEqual(routing.specialists, ["coach_agent"])
 
-    def test_compare_question_routes_to_comparison_specialist(self) -> None:
+    def test_compare_question_stays_single_agent_and_uses_global_comparison_tools(self) -> None:
         routing = build_routing_decision("compare my Billy to Eternus players", has_account=True)
 
         self.assertEqual(routing.family, "mirror")
-        self.assertIn("comparison_analyst", routing.specialists)
+        self.assertEqual(routing.specialists, ["coach_agent"])
+        self.assertIn("global_hero_stats", routing.tool_hints)
+        self.assertIn("global_item_stats", routing.tool_hints)
 
     def test_pro_build_question_prefers_global_build_flow_over_comparison(self) -> None:
         routing = build_routing_decision("what does pros build on billy?", has_account=True)
@@ -87,7 +89,7 @@ class SemanticRouterTests(unittest.TestCase):
         self.assertEqual(routing.family, "timing")
         self.assertIn("global_item_flow", routing.tool_hints)
         self.assertIn("global_item_stats", routing.tool_hints)
-        self.assertNotIn("comparison_analyst", routing.specialists)
+        self.assertEqual(routing.specialists, ["coach_agent"])
         self.assertNotIn("build_analysis", routing.tool_hints)
 
     def test_latest_patch_question_routes_to_patch_context(self) -> None:

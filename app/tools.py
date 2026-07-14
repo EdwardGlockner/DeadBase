@@ -212,7 +212,7 @@ def get_player_profile(
     """Return a recent local player snapshot for coaching.
 
     Use this for broad coaching questions about current form, win rate, K/D/A,
-    recent sample size, or when a specialist agent needs the player's overall
+    recent sample size, or when the coach needs the player's overall
     context before answering.
     """
 
@@ -672,12 +672,12 @@ def get_comparison_context(
     window_matches: int = DEFAULT_WINDOW_MATCHES,
     tool_context: Any | None = None,
 ) -> dict[str, Any]:
-    """Return the local comparison anchor for later player-vs-meta analysis.
+    """Return the local comparison reference point for later player-vs-meta analysis.
 
     Use this when the question is about stronger players, meta comparisons, or
     how the player's current hero/build should be compared externally.
 
-    This prototype only returns the player's local comparison anchors. External
+    This prototype only returns the player's local comparison reference points. External
     cohort joins are intentionally deferred until statlocker and broader meta
     tooling are wired in.
     """
@@ -706,7 +706,7 @@ def get_comparison_context(
         "top_hero": payload.get("focus", {}).get("top_hero"),
         "top_item": payload.get("focus", {}).get("top_item"),
         "status": "external_meta_not_wired",
-        "note": "Use these local anchors now; external cohort and pro comparison data will come from statlocker later.",
+        "note": "Use these local reference points now; external cohort and pro comparison data will come from statlocker later.",
     }
 
 
@@ -1972,7 +1972,7 @@ def inspect_local_state(account_id: int | None = None, window_matches: int = DEF
     """Return a compact combined snapshot for debugging and orchestration.
 
     Use this when the root coach needs one tool call to understand the current
-    local player state before deciding which specialist route to use.
+    local player state before deciding which tool lane to use.
     """
 
     resolved_account_id = _resolve_optional_account_id(account_id)
@@ -1998,11 +1998,7 @@ def inspect_local_state(account_id: int | None = None, window_matches: int = DEF
 
 
 def route_coaching_request(message: str, account_id: int | None = None, hero_name: str | None = None, window_matches: int = DEFAULT_WINDOW_MATCHES) -> dict[str, Any]:
-    """Route a coaching request to specialist analyses and return a typed plan.
-
-    Use this first when the root coach needs a narrow orchestration decision
-    before answering.
-    """
+    """Route a coaching request to the right tool lanes and return a typed plan."""
 
     context = {
         "account_id": _resolve_optional_account_id(account_id),
@@ -2019,100 +2015,3 @@ def route_coaching_request(message: str, account_id: int | None = None, hero_nam
         "selected_specialists": envelope.trace.selected_specialists,
         "tool_hints": envelope.structured_output.routing.tool_hints,
     }
-
-
-def _specialist_placeholder_payload(
-    specialist_name: str,
-    *,
-    message: str = "",
-    account_id: int | None = None,
-    hero_name: str | None = None,
-    window_matches: int = DEFAULT_WINDOW_MATCHES,
-) -> dict[str, Any]:
-    return {
-        "source": "placeholder",
-        "status": "inactive",
-        "specialist": specialist_name,
-        "message": (
-            f"{specialist_name} is only a placeholder right now while Deadbase focuses on coach_agent. "
-            "Use coach_agent plus the direct telemetry and knowledge-base tools instead."
-        ),
-        "request": {
-            "message": message,
-            "account_id": _resolve_optional_account_id(account_id),
-            "hero_name": hero_name,
-            "window_matches": window_matches,
-        },
-    }
-
-
-def run_hero_analyst(message: str = "", account_id: int | None = None, hero_name: str | None = None, window_matches: int = DEFAULT_WINDOW_MATCHES) -> dict[str, Any]:
-    """Placeholder specialist tool while coach_agent is the only active chat agent."""
-
-    return _specialist_placeholder_payload(
-        "run_hero_analyst",
-        message=message,
-        account_id=account_id,
-        hero_name=hero_name,
-        window_matches=window_matches,
-    )
-
-
-def run_build_analyst(message: str = "", account_id: int | None = None, hero_name: str | None = None, window_matches: int = DEFAULT_WINDOW_MATCHES) -> dict[str, Any]:
-    """Placeholder specialist tool while coach_agent is the only active chat agent."""
-
-    return _specialist_placeholder_payload(
-        "run_build_analyst",
-        message=message,
-        account_id=account_id,
-        hero_name=hero_name,
-        window_matches=window_matches,
-    )
-
-
-def run_matchup_analyst(message: str = "", account_id: int | None = None, hero_name: str | None = None, window_matches: int = DEFAULT_WINDOW_MATCHES) -> dict[str, Any]:
-    """Placeholder specialist tool while coach_agent is the only active chat agent."""
-
-    return _specialist_placeholder_payload(
-        "run_matchup_analyst",
-        message=message,
-        account_id=account_id,
-        hero_name=hero_name,
-        window_matches=window_matches,
-    )
-
-
-def run_report_writer(message: str = "", account_id: int | None = None, hero_name: str | None = None, window_matches: int = DEFAULT_WINDOW_MATCHES) -> dict[str, Any]:
-    """Placeholder specialist tool while coach_agent is the only active chat agent."""
-
-    return _specialist_placeholder_payload(
-        "run_report_writer",
-        message=message,
-        account_id=account_id,
-        hero_name=hero_name,
-        window_matches=window_matches,
-    )
-
-
-def run_experiment_agent(message: str = "", account_id: int | None = None, hero_name: str | None = None, window_matches: int = DEFAULT_WINDOW_MATCHES) -> dict[str, Any]:
-    """Placeholder specialist tool while coach_agent is the only active chat agent."""
-
-    return _specialist_placeholder_payload(
-        "run_experiment_agent",
-        message=message,
-        account_id=account_id,
-        hero_name=hero_name,
-        window_matches=window_matches,
-    )
-
-
-def run_vod_review_planner(message: str = "", account_id: int | None = None, hero_name: str | None = None, window_matches: int = DEFAULT_WINDOW_MATCHES) -> dict[str, Any]:
-    """Placeholder specialist tool while coach_agent is the only active chat agent."""
-
-    return _specialist_placeholder_payload(
-        "run_vod_review_planner",
-        message=message,
-        account_id=account_id,
-        hero_name=hero_name,
-        window_matches=window_matches,
-    )
