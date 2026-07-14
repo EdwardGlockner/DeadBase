@@ -8,6 +8,8 @@
   --text: #ececec;
   --text-soft: #b4b4b4;
   --text-faint: #8b8b8b;
+  --danger: #e89494;
+  --danger-soft: rgba(232, 148, 148, 0.14);
   --accent: #8ab4f8;
   --accent-soft: rgba(138, 180, 248, 0.16);
   --radius-xl: 22px;
@@ -248,11 +250,16 @@ button {
   overflow: hidden;
 }
 
+.chat-history__entry {
+  position: relative;
+  display: block;
+}
+
 .chat-history__item {
   width: 100%;
   display: grid;
   gap: 4px;
-  padding: 9px 11px;
+  padding: 10px 42px 10px 11px;
   border: 1px solid transparent;
   border-radius: 12px;
   background: transparent;
@@ -269,6 +276,65 @@ button {
 .chat-history__item.is-active {
   border-color: var(--line-soft);
   background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.chat-history__remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.38);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  cursor: pointer;
+  z-index: 1;
+  transition:
+    opacity 160ms ease,
+    visibility 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.chat-history__remove svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.chat-history__entry:hover .chat-history__remove,
+.chat-history__entry.is-active .chat-history__remove {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  color: var(--text-faint);
+}
+
+.chat-history__remove:hover {
+  background: var(--danger-soft);
+  border-color: rgba(232, 148, 148, 0.2);
+  color: var(--danger);
+  transform: translateY(-1px);
+}
+
+.chat-history__remove:focus-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  outline: none;
+  border-color: rgba(138, 180, 248, 0.42);
+  background: rgba(138, 180, 248, 0.12);
   color: var(--text);
 }
 
@@ -1487,6 +1553,17 @@ button {
 
   .chat-history__item.is-active {
     border-color: var(--line-soft);
+  }
+
+  .chat-history__entry {
+    flex: 0 0 auto;
+    min-width: 180px;
+  }
+
+  .chat-history__remove {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .sidebar__settings-panel {

@@ -22,14 +22,6 @@ EvidenceSourceType = Literal[
 ]
 SpecialistName = Literal[
     "coach_agent",
-    "player_profile_analyst",
-    "hero_analyst",
-    "build_analyst",
-    "comparison_analyst",
-    "matchup_analyst",
-    "knowledge_base_analyst",
-    "experiment_agent",
-    "vod_review_planner",
 ]
 
 
@@ -178,7 +170,7 @@ class RoutingDecision(ContractModel):
 
 class TraceStep(ContractModel):
     name: str
-    kind: Literal["route", "specialist", "retrieval", "synthesis"]
+    kind: Literal["route", "retrieval", "synthesis"]
     status: Literal["ok", "limited", "skipped", "error"] = "ok"
     duration_ms: float = Field(ge=0.0)
     detail: str = ""

@@ -10,26 +10,17 @@ The most important thing to understand before making changes is that the product
 - Prefer grounded answers over clever answers.
 - Prefer small, explicit tools over hidden service heuristics.
 - Treat `coach_agent` as the main product surface.
-- Do not expand placeholder specialist agents unless that is the specific task.
 
 ## Current Live Architecture
-
-The repo tree is broader than the currently active runtime.
 
 Today, the live coaching stack is mainly:
 
 - root agent: `coach_agent`
-- active supporting lanes:
-  - `data_analyst`
-  - `knowledge_analyst`
-  - `comparison_analyst`
 - deterministic backend support for:
   - routing hints
   - evidence packaging
   - confidence
   - trace metadata
-
-Several other specialist files still exist as placeholders so the future architecture has a home, but they are not meaningful parts of the live routing path yet.
 
 ## Local Setup
 

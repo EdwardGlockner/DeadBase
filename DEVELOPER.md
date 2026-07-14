@@ -66,7 +66,6 @@ Current structure:
 
 - `coach_agent` is the only real user-facing agent
 - the root coach should answer most turns directly with narrow tool usage
-- specialist files currently exist as placeholders so we can preserve the future architecture without letting it dominate the MVP
 
 Design rule:
 
@@ -101,7 +100,6 @@ Rules for prompt work:
 - avoid repetitive stat dumping
 - avoid giant walls of text
 - prefer grounded conclusions, then evidence, then one useful next step
-- keep specialist prompts narrower than the root prompt
 - for game concepts, mechanics, theory, items, heroes, patches, and systems questions, make the coach check the KB before answering from memory
 
 ## Tooling Model

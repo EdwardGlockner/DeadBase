@@ -7,7 +7,6 @@ The short version:
 - the product is a chat-first Deadlock coaching workspace
 - the root product surface is `coach_agent`
 - the strongest current work is around answer grounding, knowledge retrieval, scoped analytics, and eval infrastructure
-- some specialist agent files still exist as placeholders and should not be mistaken for mature live workflow pieces
 
 ## What To Review First
 
@@ -26,16 +25,7 @@ The live runtime today is best understood as:
 
 - one root conversational agent
 - a thin orchestration layer that attaches routing and evidence support
-- a small set of real internal support lanes
 - tools for telemetry, global analytics, patches, and KB/reference retrieval
-
-Active internal analyst lanes today:
-
-- `data_analyst`
-- `knowledge_analyst`
-- `comparison_analyst`
-
-Other specialist files are placeholders only.
 
 ## Review Questions That Matter Most
 
@@ -77,7 +67,6 @@ Bad answers usually fail by:
 ## Current Rough Edges
 
 - some architecture docs still describe a more ambitious future than the live system
-- placeholder specialist files make the repo look more complete than the real routing path
 - the eval system is now robust, but the live model judge still depends on unsandboxed auth access in local Codex runs
 - answer quality still needs more pressure on some build and scope-heavy families
 

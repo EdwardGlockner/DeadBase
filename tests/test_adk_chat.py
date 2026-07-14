@@ -17,7 +17,7 @@ from deadlock_coach.coach_service import CoachContext
 class AdkChatTests(unittest.TestCase):
     def test_extract_reply_prefers_root_agent_output(self) -> None:
         events = [
-            _fake_event("hero_pool_analyst", "Intermediary specialist note."),
+            _fake_event("build_capability", "Intermediary capability note."),
             _fake_event("coach_agent", "Final coach answer."),
         ]
 

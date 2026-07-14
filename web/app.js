@@ -74,10 +74,6 @@ let accountSearchRequestSequence = 0;
 
 const navItems = [
   { id: "coach", title: "Coach", meta: "Conversation" },
-  { id: "hero", title: "Hero Lab", meta: "Pool read" },
-  { id: "builds", title: "Builds", meta: "Timing & path" },
-  { id: "mirror", title: "Pro Mirror", meta: "Comparison" },
-  { id: "experiments", title: "Experiments", meta: "Tests" },
 ];
 const validScreenIds = new Set(navItems.map((item) => item.id));
 
@@ -90,22 +86,6 @@ const screenCopy = {
   coach: {
     title: "Coach",
     subtitle: "Ask what to queue next, which hero is stable, what changed this patch, how your win rates look, or what to test next.",
-  },
-  hero: {
-    title: "Hero Lab",
-    subtitle: "Read your current pool as reliability, repetition, and pressure points.",
-  },
-  builds: {
-    title: "Builds",
-    subtitle: "Track which item paths repeat and how they unfold from early to late game.",
-  },
-  mirror: {
-    title: "Pro Mirror",
-    subtitle: "Frame player-vs-pro questions around the hero or item path that matters right now.",
-  },
-  experiments: {
-    title: "Experiments",
-    subtitle: "Turn unstable results into smaller build or hero-pool tests.",
   },
 };
 
@@ -199,6 +179,24 @@ function createConversationRecord(seed = {}) {
     selectedHero: seed.selectedHero || "",
     selectedWindow: seed.selectedWindow || "",
   };
+}
+
+function estimatedRankLabel(account) {
+  if (account.last_team_avg_rank) {
+    return `Estimated rank: ${account.last_team_avg_rank}`;
+  }
+  if (account.last_team_avg_badge != null) {
+    return `Estimated rank badge: ${account.last_team_avg_badge}`;
+  }
+  return null;
+}
+
+function trashIconSvg() {
+  return `
+    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path d="M6.25 2.25h3.5l.45 1.25h2.05a.75.75 0 1 1 0 1.5h-.6l-.52 6.05A1.75 1.75 0 0 1 9.38 12.75H6.62a1.75 1.75 0 0 1-1.75-1.7L4.35 5H3.75a.75.75 0 1 1 0-1.5H5.8l.45-1.25Zm.6 1.25h2.3l-.16-.45h-1.98l-.16.45Zm-1 1.5.51 5.92a.25.25 0 0 0 .25.23h2.78a.25.25 0 0 0 .25-.23L10.15 5h-3.7Zm1.18 1.2a.6.6 0 0 1 .6.6v2.75a.6.6 0 1 1-1.2 0V6.8a.6.6 0 0 1 .6-.6Zm1.94 0a.6.6 0 0 1 .6.6v2.75a.6.6 0 1 1-1.2 0V6.8a.6.6 0 0 1 .6-.6Z" fill="currentColor"/>
+    </svg>
+  `;
 }
 
 function normalizeStoredMessage(message = {}) {
@@ -377,6 +375,29 @@ function createNewConversation() {
   state.conversations = [conversation, ...state.conversations.filter((item) => item.id !== conversation.id)];
   applyConversation(conversation);
   saveStoredConversations();
+}
+
+function removeConversation(conversationId) {
+  const index = state.conversations.findIndex((conversation) => conversation.id === conversationId);
+  if (index < 0) return false;
+
+  const removingCurrent = state.currentConversationId === conversationId;
+  state.conversations = state.conversations.filter((conversation) => conversation.id !== conversationId);
+
+  if (!state.conversations.length) {
+    createNewConversation();
+    return true;
+  }
+
+  if (removingCurrent) {
+    const nextConversation = state.conversations[Math.min(index, state.conversations.length - 1)] || state.conversations[0];
+    if (nextConversation) {
+      applyConversation(nextConversation);
+    }
+  }
+
+  saveStoredConversations();
+  return true;
 }
 
 function initializeConversations() {
@@ -1167,16 +1188,27 @@ function renderSidebar() {
               ${visibleHistory
                 .map(
                   (conversation) => `
-                    <button
-                      class="chat-history__item ${conversation.id === state.currentConversationId ? "is-active" : ""}"
-                      data-conversation-id="${conversation.id}"
-                      type="button"
-                    >
-                      <span class="chat-history__row">
-                        <span class="chat-history__title">${escapeHtml(conversation.title || "New chat")}</span>
-                        <span class="chat-history__meta">${formatConversationTime(conversation.updatedAt)}</span>
-                      </span>
-                    </button>
+                    <div class="chat-history__entry ${conversation.id === state.currentConversationId ? "is-active" : ""}">
+                      <button
+                        class="chat-history__item ${conversation.id === state.currentConversationId ? "is-active" : ""}"
+                        data-conversation-id="${conversation.id}"
+                        type="button"
+                      >
+                        <span class="chat-history__row">
+                          <span class="chat-history__title">${escapeHtml(conversation.title || "New chat")}</span>
+                          <span class="chat-history__meta">${formatConversationTime(conversation.updatedAt)}</span>
+                        </span>
+                      </button>
+                      <button
+                        class="chat-history__remove"
+                        data-remove-conversation="${conversation.id}"
+                        type="button"
+                        aria-label="Remove chat ${escapeHtml(conversation.title || "New chat")}"
+                        title="Remove chat"
+                      >
+                        ${trashIconSvg()}
+                      </button>
+                    </div>
                   `,
                 )
                 .join("")}
@@ -1312,6 +1344,16 @@ function renderSidebar() {
       const conversation = state.conversations.find((item) => item.id === button.dataset.conversationId);
       if (!conversation) return;
       applyConversation(conversation);
+      renderApp();
+      await loadAccountSummary();
+    });
+  });
+
+  nav.querySelectorAll("[data-remove-conversation]").forEach((button) => {
+    button.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const removed = removeConversation(button.dataset.removeConversation);
+      if (!removed) return;
       renderApp();
       await loadAccountSummary();
     });
@@ -1476,7 +1518,7 @@ function paintAccountSearchSurface() {
                   account.country_code || null,
                   account.matches != null ? `${account.matches} tracked` : null,
                   account.matches_played_last_30d != null ? `${account.matches_played_last_30d} matches / 30d` : null,
-                  account.last_team_avg_badge != null ? `Badge ${account.last_team_avg_badge}` : null,
+                  estimatedRankLabel(account),
                 ]
                   .filter(Boolean)
                   .join(" · ")}
@@ -1729,266 +1771,11 @@ function renderCoachScreen() {
   `;
 }
 
-function renderDataEmpty(title, body) {
-  return `
-    <section class="lens">
-      <div class="empty-state">
-        <div class="empty-state__title">${title}</div>
-        <div class="empty-state__body">${body}</div>
-      </div>
-    </section>
-  `;
-}
-
-function renderHeroLab() {
-  const summary = state.accountSummary;
-  if (!summary) {
-    return renderDataEmpty("No hero read yet", "Select a synced account in the sidebar to load your live hero pool.");
-  }
-
-  return `
-    <section class="lens">
-      <div class="lens__eyebrow">Hero pool read</div>
-      <h1 class="lens__title">Your current pool is small enough to coach directly.</h1>
-      <div class="lens__body">
-        Read the recent sample as repetition first. The point is not to find the most beautiful meta card, it is to see which hero is absorbing games and whether the sample says stabilize or expand.
-      </div>
-
-      <div class="analysis-board">
-        ${(summary.hero_performance || [])
-          .map(
-            (hero) => `
-              <article class="analysis-card">
-                <div class="analysis-card__title">${hero.hero_label}</div>
-                <div class="analysis-card__meta">${
-                  hero.resolved_games > 0
-                    ? `${formatGameCount(hero.games)} · ${formatRecord(hero.wins, hero.resolved_games)} verified record`
-                    : `${formatGameCount(hero.games)} · results pending`
-                }</div>
-                <div class="progress">
-                  <div class="progress__bar" style="width: ${(hero.games / Math.max(summary.total_matches, 1)) * 100}%"></div>
-                </div>
-                <div class="analysis-card__value">${Math.round((hero.games / Math.max(summary.total_matches, 1)) * 100)}% of sample</div>
-              </article>
-            `,
-          )
-          .join("")}
-      </div>
-
-      <div class="lens__chips">
-        ${[
-          `Which hero in my pool is most reliable right now?`,
-          `What is breaking down in my ${summary.focus?.top_hero?.hero_label || "main"} games?`,
-        ]
-          .map((ask) => `<button class="lens__chip" data-lens-ask="${ask}" type="button">${ask}</button>`)
-          .join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderBuildsView() {
-  const summary = state.accountSummary;
-  if (!summary) {
-    return renderDataEmpty("No build read yet", "Sync a player and hydrate a few matches to unlock item timing evidence.");
-  }
-
-  return `
-    <section class="lens">
-      <div class="lens__eyebrow">Build timing read</div>
-      <h1 class="lens__title">This is the current item spine showing up in your local matches.</h1>
-      <div class="lens__body">
-        This is not full branch intelligence yet, but it is enough to separate your opening core from the items that usually show up later in the game.
-      </div>
-
-      <div class="analysis-table">
-        ${(summary.item_timings || [])
-          .map(
-            (item) => `
-              <div class="analysis-table__row">
-                <div>
-                  <div class="analysis-card__title">${item.item_label}</div>
-                  <div class="analysis-card__meta">${item.purchases} purchases in sample · ${formatItemPhase(item.avg_bought_at_s)}-game anchor</div>
-                </div>
-                <div class="analysis-table__value">${formatItemPhase(item.avg_bought_at_s)}</div>
-              </div>
-            `,
-          )
-          .join("")}
-      </div>
-
-      <div class="lens__chips">
-        ${[
-          `Which item path is performing best for me?`,
-          `Is ${summary.focus?.top_item?.item_label || "this item"} arriving too late in my games?`,
-        ]
-          .map((ask) => `<button class="lens__chip" data-lens-ask="${ask}" type="button">${ask}</button>`)
-          .join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderMirrorView() {
-  const summary = state.accountSummary;
-  if (!summary) {
-    return renderDataEmpty("No comparison context yet", "Load a synced account first so the coach can anchor player-vs-pro questions.");
-  }
-
-  const topHero = summary.focus?.top_hero?.hero_label || "your current main";
-  const topItem = summary.focus?.top_item?.item_label || "your anchor item";
-
-  return `
-    <section class="lens">
-      <div class="lens__eyebrow">Mirror prompt surface</div>
-      <h1 class="lens__title">Use the coach to compare a specific hero or timing branch, not your whole profile at once.</h1>
-      <div class="lens__body">
-        The MVP still needs cohort joins for real pro deltas, but the product can already frame those questions against your live sample instead of asking from scratch every time.
-      </div>
-
-      <div class="analysis-board analysis-board--two">
-        <article class="analysis-card">
-          <div class="analysis-card__title">Current compare target</div>
-          <div class="analysis-card__meta">${topHero}</div>
-        </article>
-        <article class="analysis-card">
-          <div class="analysis-card__title">Current build anchor</div>
-          <div class="analysis-card__meta">${topItem}</div>
-        </article>
-      </div>
-
-      <div class="lens__chips">
-        ${[
-          `Compare my ${topHero} build to top players.`,
-          `Show me where my item timings lag top players.`,
-        ]
-          .map((ask) => `<button class="lens__chip" data-lens-ask="${ask}" type="button">${ask}</button>`)
-          .join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderReportsView() {
-  const summary = state.accountSummary;
-  const plan = reportPlan();
-  if (!summary || !plan) {
-    return renderDataEmpty("No report available yet", "Once you select a synced account, this screen turns the current sample into a short coaching brief.");
-  }
-
-  return `
-    <section class="lens">
-      <div class="lens__eyebrow">Coaching brief</div>
-      <h1 class="lens__title">Keep, watch, and test from the current local sample.</h1>
-
-      <div class="report-grid">
-        <article class="report-card">
-          <div class="report-card__label">Keep</div>
-          <div class="report-card__body">${plan.keep}</div>
-        </article>
-        <article class="report-card">
-          <div class="report-card__label">Watch</div>
-          <div class="report-card__body">${plan.watch}</div>
-        </article>
-        <article class="report-card">
-          <div class="report-card__label">Test</div>
-          <div class="report-card__body">${plan.test}</div>
-        </article>
-      </div>
-
-      <div class="lens__chips">
-        ${[
-          "What should I focus on right now?",
-          "What should I test over my next five games?",
-        ]
-          .map((ask) => `<button class="lens__chip" data-lens-ask="${ask}" type="button">${ask}</button>`)
-          .join("")}
-      </div>
-    </section>
-  `;
-}
-
-function renderExperimentsView() {
-  const summary = state.accountSummary;
-  if (!summary) {
-    return renderDataEmpty("No experiment context yet", "Select a synced account first so experiment ideas can be grounded in the current sample.");
-  }
-
-  const topHero = summary.focus?.top_hero?.hero_label || "your current main";
-  const topItem = summary.focus?.top_item?.item_label || "your anchor item";
-  const ideas = [
-    {
-      title: `Pool tighten on ${topHero}`,
-      meta: "Run a smaller hero pool for five games and review whether K/D/A stabilizes before adding more variables.",
-    },
-    {
-      title: `Timing check on ${topItem}`,
-      meta: `Track whether ${summary.focus?.top_item?.item_label || "that anchor"} fits your early, mid, or late pattern more cleanly without warping the rest of the path.`,
-    },
-  ];
-
-  return `
-    <section class="lens">
-      <div class="lens__eyebrow">Experiment board</div>
-      <h1 class="lens__title">Small tests beat broad overhauls when the sample is unstable.</h1>
-
-      <div class="analysis-board analysis-board--two">
-        ${ideas
-          .map(
-            (idea) => `
-              <article class="analysis-card">
-                <div class="analysis-card__title">${idea.title}</div>
-                <div class="analysis-card__meta">${idea.meta}</div>
-              </article>
-            `,
-          )
-          .join("")}
-      </div>
-
-      <div class="lens__chips">
-        ${[
-          `Which build branch should I test next?`,
-          `What should I practice before I widen beyond ${topHero}?`,
-        ]
-          .map((ask) => `<button class="lens__chip" data-lens-ask="${ask}" type="button">${ask}</button>`)
-          .join("")}
-      </div>
-    </section>
-  `;
-}
-
 function renderMain() {
   state.screen = normalizeScreen(state.screen);
   const host = document.getElementById("screen-host");
-
-  if (state.screen === "coach") {
-    host.innerHTML = renderCoachScreen();
-    wireCoachEvents();
-    return;
-  }
-
-  const content =
-    state.screen === "hero"
-      ? renderHeroLab()
-      : state.screen === "builds"
-        ? renderBuildsView()
-        : state.screen === "mirror"
-          ? renderMirrorView()
-          : renderExperimentsView();
-
-  host.innerHTML = `
-    <section class="screen-frame">
-      <div class="screen-frame__main">${content}</div>
-      ${renderContextRail()}
-    </section>
-  `;
-  wireContextRail();
-
-  document.querySelectorAll("[data-lens-ask]").forEach((button) => {
-    button.addEventListener("click", () => {
-      submitQuery(button.dataset.lensAsk);
-    });
-  });
+  host.innerHTML = renderCoachScreen();
+  wireCoachEvents();
 }
 
 async function submitQuery(query) {
