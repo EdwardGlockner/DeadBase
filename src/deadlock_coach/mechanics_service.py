@@ -4,12 +4,11 @@ import html
 import re
 import sqlite3
 from contextlib import closing
-from pathlib import Path
 from typing import Any
 
 from deadlock_coach.api import DeadlockApiClient
 from deadlock_coach.config import Settings
-from deadlock_coach.storage import SnapshotRecord, _json_dumps, save_json_snapshot
+from deadlock_coach.storage import SnapshotRecord, _connect, _json_dumps, save_json_snapshot
 
 ITEM_ASSETS_ENDPOINT = "/v1/assets/items"
 
@@ -17,17 +16,24 @@ ITEM_ASSETS_ENDPOINT = "/v1/assets/items"
 # attributes) runs to hundreds of characters per icon. The blocks must be
 # removed wholesale — stripping tags alone would leak attribute-free text nodes
 # nested inside them.
-_SVG_BLOCK_RE = re.compile(r"<svg\b.*?</svg\s*>", re.IGNORECASE | re.DOTALL)
+_SVG_BLOCK_RE = re.compile(r"<svg\b(?:(?!<svg\b).)*?</svg\s*>", re.IGNORECASE | re.DOTALL)
 _SVG_SELF_CLOSED_RE = re.compile(r"<svg\b[^>]*/\s*>", re.IGNORECASE)
 _MARKUP_TAG_RE = re.compile(r"<[^>]+>")
 
 
 def sanitize_mechanics_text(text: Any) -> str:
-    cleaned = str(text or "")
-    cleaned = _SVG_BLOCK_RE.sub(" ", cleaned)
-    cleaned = _SVG_SELF_CLOSED_RE.sub(" ", cleaned)
+    # Unescape first so entity-encoded markup (&lt;svg&gt;...) is stripped like
+    # literal markup instead of re-emerging as tags after stripping.
+    cleaned = html.unescape(str(text or ""))
+    # Innermost-first loop so nested SVG blocks cannot leak trailing content
+    # past a non-greedy single pass.
+    while True:
+        stripped = _SVG_BLOCK_RE.sub(" ", cleaned)
+        stripped = _SVG_SELF_CLOSED_RE.sub(" ", stripped)
+        if stripped == cleaned:
+            break
+        cleaned = stripped
     cleaned = _MARKUP_TAG_RE.sub(" ", cleaned)
-    cleaned = html.unescape(cleaned)
     return re.sub(r"\s+", " ", cleaned).strip()
 
 
@@ -245,9 +251,3 @@ def _similar_names(item_rows: list[sqlite3.Row], requested: str, limit: int = 5)
         if any(token in str(row["name"]).casefold() for token in tokens)
     ]
     return matches[:limit]
-
-
-def _connect(path: Path) -> sqlite3.Connection:
-    connection = sqlite3.connect(path)
-    connection.row_factory = sqlite3.Row
-    return connection

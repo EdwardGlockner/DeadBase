@@ -22,8 +22,8 @@ from app.tools import (
     get_global_item_flow,
     get_global_item_stats,
     get_hero_pool_analysis,
-    get_item_mechanics,
     get_hero_reference,
+    get_item_mechanics,
     get_item_reference,
     get_patch_context,
     get_player_performance_curve,
@@ -746,7 +746,12 @@ class AdkToolsTests(unittest.TestCase):
                 "cost": 1250,
                 "item_slot_type": "vitality",
                 "is_active_item": False,
-                "description": {"desc": "Applies <b>healing reduction</b> to enemies you damage."},
+                "description": {
+                    "desc": (
+                        "Applies <b>healing reduction</b> to enemies you damage. "
+                        "&lt;svg viewBox=&quot;0 0 8 8&quot;&gt;&lt;path d=&quot;M9 9L2 2&quot;/&gt;&lt;/svg&gt;"
+                    )
+                },
                 "properties": {
                     "HealAmpReductionPercent": {
                         "css_class": "damage",
@@ -845,7 +850,13 @@ class AdkToolsTests(unittest.TestCase):
         self.assertEqual(item["name"], "Healbane")
         self.assertEqual(item["activation"], "passive")
         self.assertEqual(item["properties"]["HealAmpReductionPercent"]["value"], "-40")
-        self.assertIn("healing reduction", item["description"].lower())
+        description = item["description"]
+        self.assertIn("healing reduction", description.lower())
+        # Entity-encoded SVG must be removed like literal SVG, not re-emerge
+        # as tags after unescaping.
+        self.assertNotIn("svg", description.lower())
+        self.assertNotIn("M9 9", description)
+        self.assertNotIn("<", description)
 
     def test_get_item_mechanics_prefers_local_snapshot_after_first_sync(self) -> None:
         with self._temporary_home():
