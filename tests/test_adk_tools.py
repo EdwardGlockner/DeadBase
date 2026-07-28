@@ -701,7 +701,8 @@ class AdkToolsTests(unittest.TestCase):
         """Fake upstream keyed by path. Item 401 is universal (95% everywhere,
         very high win rate); 402 is Seven's distinctive item (60% on Seven vs
         10% global, low win rate); 403 is fringe everywhere. Hero 17 is playable
-        but has no analytics rows; hero 99 is not playable."""
+        but absent from hero-stats (no denominator, so item-stats must not be
+        fetched for it); hero 99 is not playable."""
 
         def fake(path: str, params: dict | None = None) -> tuple[str, object]:
             params = dict(params or {})
@@ -736,8 +737,6 @@ class AdkToolsTests(unittest.TestCase):
                     ]
                 if hero_id == 16:
                     return url, [{"item_id": 401, "matches": 475, "wins": 300, "losses": 175}]
-                if hero_id == 17:
-                    return url, []
             raise AssertionError(f"unexpected upstream fetch: {path} {params}")
 
         return fake
@@ -784,14 +783,15 @@ class AdkToolsTests(unittest.TestCase):
         self.assertGreater(signature[0]["pick_share_lift"], universal["pick_share_lift"])
 
         # One roster request, one hero-stats denominator request, one global
-        # baseline, and one item-stats request per playable hero. The
-        # non-playable hero 99 must not be fetched.
+        # baseline, and one item-stats request per playable hero with a stored
+        # denominator. Neither the non-playable hero 99 nor denominator-less
+        # hero 17 may be fetched.
         analytics_hero_ids = [
             params.get("hero_id")
             for path, params in call_log
             if path == "/v1/analytics/item-stats" and params.get("hero_id") is not None
         ]
-        self.assertEqual(sorted(analytics_hero_ids), [15, 16, 17])
+        self.assertEqual(sorted(analytics_hero_ids), [15, 16])
         self.assertEqual(sum(1 for path, params in call_log if path == "/v1/analytics/hero-stats"), 1)
         self.assertEqual(
             sum(1 for path, params in call_log if path == "/v1/analytics/item-stats" and "hero_id" not in params),

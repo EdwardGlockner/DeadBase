@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import closing
-from typing import Any
+from typing import Any, NamedTuple
 
 from deadlock_coach.analytics_service import window_label
 from deadlock_coach.api import DeadlockApiClient
@@ -30,18 +30,29 @@ def playable_hero_ids(payload: Any) -> list[int]:
     return sorted(hero_ids)
 
 
-def _item_matches_by_id(payload: Any) -> dict[int, int]:
+def _matches_by_id(payload: Any, id_key: str) -> dict[int, int]:
     result: dict[int, int] = {}
     if not isinstance(payload, list):
         return result
     for row in payload:
         if not isinstance(row, dict):
             continue
-        item_id = row.get("item_id")
+        row_id = row.get(id_key)
         matches = row.get("matches")
-        if isinstance(item_id, int) and isinstance(matches, int) and matches > 0:
-            result[item_id] = matches
+        if isinstance(row_id, int) and isinstance(matches, int) and matches > 0:
+            result[row_id] = matches
     return result
+
+
+class _SignatureRow(NamedTuple):
+    snapshot_id: int
+    hero_id: int
+    item_id: int
+    hero_matches: int
+    item_matches: int
+    hero_pick_share: float
+    global_pick_share: float
+    pick_share_lift: float
 
 
 def sync_hero_signature(
@@ -71,47 +82,48 @@ def sync_hero_signature(
     hero_stats_snapshot = save_json_snapshot(
         settings, "deadlock_api", "analytics", "hero-signature--hero-stats", hero_stats_url, hero_stats_payload
     )
-    hero_matches_by_id: dict[int, int] = {}
-    if isinstance(hero_stats_payload, list):
-        for row in hero_stats_payload:
-            if not isinstance(row, dict):
-                continue
-            hero_id = row.get("hero_id")
-            matches = row.get("matches")
-            if isinstance(hero_id, int) and isinstance(matches, int) and matches > 0:
-                hero_matches_by_id[hero_id] = matches
+    hero_matches_by_id = _matches_by_id(hero_stats_payload, "hero_id")
+    # Global pick shares are computed against the summed hero-stats match
+    # count. Both endpoints carry the same badge scoping, so the numerator and
+    # denominator describe the same population; if lifts ever come back
+    # uniformly small, suspect this assumption first (see spec #1).
     baseline_matches = sum(hero_matches_by_id.values())
 
     baseline_url, baseline_payload = client.fetch_json(ITEM_STATS_ENDPOINT, params=params)
     baseline_snapshot = save_json_snapshot(
         settings, "deadlock_api", "analytics", "hero-signature--baseline", baseline_url, baseline_payload
     )
-    baseline_item_matches = _item_matches_by_id(baseline_payload)
+    baseline_item_matches = _matches_by_id(baseline_payload, "item_id")
 
-    hero_item_rows: list[tuple[int, int, int, int, int, float, float, float]] = []
+    # A playable hero absent from hero-stats has no true denominator, so no
+    # share can be computed; skip the fetch and surface the gap in the summary.
+    heroes_without_denominator = [
+        hero_id for hero_id in hero_ids if hero_matches_by_id.get(hero_id, 0) <= 0
+    ]
+    hero_item_rows: list[_SignatureRow] = []
     for hero_id in hero_ids:
+        hero_matches = hero_matches_by_id.get(hero_id, 0)
+        if hero_matches <= 0 or baseline_matches <= 0:
+            continue
         hero_url, hero_payload = client.fetch_json(ITEM_STATS_ENDPOINT, params={**params, "hero_id": hero_id})
         hero_snapshot = save_json_snapshot(
             settings, "deadlock_api", "analytics", f"hero-signature--hero-{hero_id}", hero_url, hero_payload
         )
-        hero_matches = hero_matches_by_id.get(hero_id)
-        if hero_matches is None or hero_matches <= 0 or baseline_matches <= 0:
-            continue
-        for item_id, item_matches in _item_matches_by_id(hero_payload).items():
+        for item_id, item_matches in _matches_by_id(hero_payload, "item_id").items():
             # The share denominator is the hero's true match count from
             # hero-stats, never inferred from the most-purchased item.
             hero_share = 100.0 * item_matches / hero_matches
             global_share = 100.0 * baseline_item_matches.get(item_id, 0) / baseline_matches
             hero_item_rows.append(
-                (
-                    hero_snapshot.id,
-                    hero_id,
-                    item_id,
-                    hero_matches,
-                    item_matches,
-                    hero_share,
-                    global_share,
-                    hero_share - global_share,
+                _SignatureRow(
+                    snapshot_id=hero_snapshot.id,
+                    hero_id=hero_id,
+                    item_id=item_id,
+                    hero_matches=hero_matches,
+                    item_matches=item_matches,
+                    hero_pick_share=hero_share,
+                    global_pick_share=global_share,
+                    pick_share_lift=hero_share - global_share,
                 )
             )
 
@@ -158,7 +170,8 @@ def sync_hero_signature(
         "run_id": run_id,
         "fetched_at": hero_stats_snapshot.fetched_at,
         "patch_window_label": patch_window_label,
-        "heroes_synced": len(hero_ids),
+        "heroes_synced": len(hero_ids) - len(heroes_without_denominator),
+        "heroes_without_denominator": heroes_without_denominator,
         "signature_rows": len(hero_item_rows),
         "baseline_matches": baseline_matches,
         "min_average_badge": params.get("min_average_badge"),
