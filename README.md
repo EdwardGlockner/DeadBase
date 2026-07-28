@@ -217,8 +217,22 @@ Planned or in-progress improvements:
 - tracing and observability for each agent turn
 - continued UI polish for chat, sidebar, and settings flows
 
+## Agent Skills
+
+This repo ships Matt Pocock's AI-coding skills (in `.claude/skills/`) for turning ideas into scoped
+GitHub issues and then implemented code, via a repeatable flow:
+
+```
+/wayfinder  →  /grill-with-docs  →  /to-spec  →  /to-tickets  →  /implement
+```
+
+Each developer does a small one-time local setup (Claude Code + the `gh` CLI + login; macOS,
+Windows, and Linux all covered). See [`docs/agents/README.md`](docs/agents/README.md) for install,
+authentication, how to run the flow, and troubleshooting.
+
 ## Extra Docs
 
+- [`docs/agents/README.md`](docs/agents/README.md) for the AI-coding agent skills (install, auth, and the ticket/spec flow)
 - [`DEVELOPER.md`](/Users/eanu/Documents/deadlock-coach/DEVELOPER.md) for implementation details
 - [`CONTRIBUTING.md`](/Users/eanu/Documents/deadlock-coach/CONTRIBUTING.md) for collaboration and PR workflow
 - [`docs/review-guide.md`](/Users/eanu/Documents/deadlock-coach/docs/review-guide.md) for reviewer orientation and validation steps
