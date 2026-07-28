@@ -94,6 +94,31 @@ hero assets on a 7-day TTL, but patches have shipped a day apart (06-30, 07-01).
 properties must be invalidated when a new `patch_event` appears, otherwise the
 mechanical layer — the half users will trust most — can be a week stale.
 
+## Where mechanics live
+
+Mechanics are normalized into the warehouse rather than read from the per-item disk
+cache in `asset_service`, following the existing
+`source_snapshot → normalize_* → read_latest_*` pattern used by every other analytics
+surface.
+
+The disk cache stores one file per item *previously fetched*, which is adequate for
+single lookups and wrong for the queries this design depends on. `find_items_by_effect`
+must scan all items to answer, and mining prunes candidate pairs by matching properties
+across both sides — both are scans or joins, and both would be either 173 cold HTTP
+calls or silently incomplete against a partial cache.
+
+Sync cost is small: `/v1/assets/items` returns all 726 entries (items, abilities,
+weapons) in a single request, and `/v1/assets/heroes` likewise. Two calls, not one per
+item.
+
+Shape: roughly 173 shopable items and 200 abilities belonging to playable heroes, with
+349 distinct item property keys and 1,281 distinct ability property keys. The long tail
+of ability keys is plumbing (cooldowns, cast times, radii); only a minority carry threat
+meaning.
+
+Freshness is governed by patch detection, not a TTL — see the asset-freshness note under
+Constraints.
+
 ## Rank scoping
 
 Recommendations are sourced from **high badge (90+)**; the player's own bracket is used
