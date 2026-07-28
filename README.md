@@ -248,6 +248,9 @@ authentication, how to run the flow, and troubleshooting.
 
 ## Extra Docs
 
+- [`CONTEXT.md`](CONTEXT.md) for the domain glossary — the canonical vocabulary for coaching concepts
+- [`docs/adr/`](docs/adr/) for architectural decision records and the reasoning behind them
+- [`docs/item-recommendations.md`](docs/item-recommendations.md) for the item recommendation design (research and decisions; not yet implemented)
 - [`docs/agents/README.md`](docs/agents/README.md) for the AI-coding agent skills (install, auth, and the ticket/spec flow)
 - [`DEVELOPER.md`](/Users/eanu/Documents/deadlock-coach/DEVELOPER.md) for implementation details
 - [`CONTRIBUTING.md`](/Users/eanu/Documents/deadlock-coach/CONTRIBUTING.md) for collaboration and PR workflow
