@@ -786,6 +786,87 @@ def _strip_html(text: str | None) -> str:
     return re.sub(r"\s+", " ", cleaned).strip()
 
 
+# Large enough that a single patch's full change list is delivered intact for
+# "list every change" questions; only the very largest gameplay updates are
+# trimmed, and when they are the `truncated` flag tells the coach to say so.
+PATCH_BODY_MAX_CHARS = 20000
+
+
+def _patch_body_text(raw: str | None, *, max_chars: int = PATCH_BODY_MAX_CHARS) -> tuple[str, bool]:
+    """Return readable patch-note text plus whether it was truncated.
+
+    Steam patch notes arrive as plain text with Steam BBCode (e.g. `[p]`,
+    `[list]`, `[*]`). HTML tags and BBCode are stripped while line structure is
+    kept so the change list stays scannable. The body is only trimmed if it
+    exceeds `max_chars`; the returned bool signals truncation so the coach does
+    not present a partial list as complete.
+    """
+
+    text = str(raw or "")
+    if not text.strip():
+        return "", False
+
+    # Turn line/list boundaries into newlines before stripping so the change
+    # list stays on separate lines instead of running together. Steam patch
+    # notes wrap each change in BBCode [p]...[/p] paragraphs.
+    text = re.sub(r"(?i)<br\s*/?>|</p>|</li>", "\n", text)
+    text = re.sub(r"(?i)\[/?p\]|\[/li\]|\[\*\]", "\n", text)  # BBCode paragraphs / list items
+    text = re.sub(r"<[^>]+>", "", text)  # remaining HTML tags
+    text = re.sub(r"\[/?[a-zA-Z][^\]]*\]", "", text)  # remaining BBCode like [b] [list]
+    text = text.replace("&quot;", '"').replace("&#39;", "'").replace("&amp;", "&")
+    # Collapse runs of blank lines but preserve single line breaks between changes.
+    lines = [line.rstrip() for line in text.splitlines()]
+    collapsed: list[str] = []
+    for line in lines:
+        if not line.strip() and collapsed and not collapsed[-1].strip():
+            continue
+        collapsed.append(line)
+    body = "\n".join(collapsed).strip()
+
+    truncated = len(body) > max_chars
+    if truncated:
+        body = body[:max_chars].rstrip() + " [...]"
+    return body, truncated
+
+
+def _patch_query_tokens(query: str) -> list[str]:
+    return [token for token in re.split(r"[^a-z0-9]+", query.lower()) if len(token) >= 2]
+
+
+def _select_patch_rows(rows: list[Any], query: str, limit: int) -> list[Any]:
+    """Pick the most relevant patch rows for a query via token overlap.
+
+    A plain SQL `LIKE %query%` requires the whole query string to appear as one
+    contiguous substring, so pasting extra words (or phrasing a date differently)
+    wrongly returns nothing. Ranking by how many query tokens appear in the
+    title/body is far more forgiving. `rows` must already be sorted newest-first
+    so equal-score ties keep recency order (Python's sort is stable).
+    """
+
+    if not query:
+        return rows[:limit]
+
+    tokens = set(_patch_query_tokens(query))
+    if not tokens:
+        return rows[:limit]
+
+    scored: list[tuple[int, Any]] = []
+    for row in rows:
+        title_hay = str(row["title"] or "").lower()
+        body_hay = str(row["content_full"] or row["content_excerpt"] or "").lower()
+        # Weight title matches far above body matches: a date/name in the title
+        # is a deliberate reference, whereas short numeric tokens (04, 30, 2026)
+        # match incidental numbers scattered through other patches' long bodies.
+        title_hits = sum(1 for token in tokens if token in title_hay)
+        body_hits = sum(1 for token in tokens if token in body_hay)
+        score = title_hits * 10 + body_hits
+        if score:
+            scored.append((score, row))
+
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return [row for _score, row in scored[:limit]]
+
+
 def _live_patch_matches(query: str, limit: int) -> list[dict[str, Any]]:
     settings = _settings()
     client = DeadlockApiClient(settings)
@@ -801,6 +882,7 @@ def _live_patch_matches(query: str, limit: int) -> list[dict[str, Any]]:
         haystack = f"{title}\n{excerpt}".casefold()
         if normalized_query and normalized_query not in haystack:
             continue
+        body, truncated = _patch_body_text(row.get("content"))
         matches.append(
             {
                 "source": str(row.get("source") or "deadlock_api_live"),
@@ -809,6 +891,8 @@ def _live_patch_matches(query: str, limit: int) -> list[dict[str, Any]]:
                 "published_at_label": _format_reference_date(row.get("pub_date")),
                 "link": str(row.get("link") or ""),
                 "excerpt": excerpt,
+                "body": body,
+                "truncated": truncated,
             }
         )
         if len(matches) >= max(1, min(limit, 10)):
@@ -1157,58 +1241,54 @@ def get_patch_context(query: str = "", limit: int = 3) -> dict[str, Any]:
     search_query = query.strip()
     normalized_limit = max(1, min(limit, 10))
     with closing(_connect(settings.warehouse_db_path)) as connection:
-        if search_query:
-            pattern = f"%{search_query.lower()}%"
-            rows = connection.execute(
-                """
-                SELECT
-                    source,
-                    title,
-                    published_at,
-                    link,
-                    content_excerpt
-                FROM patch_event
-                WHERE lower(title) LIKE ?
-                   OR lower(coalesce(content_excerpt, '')) LIKE ?
-                ORDER BY published_at DESC, title ASC
-                LIMIT ?
-                """,
-                (pattern, pattern, normalized_limit),
-            ).fetchall()
-        else:
-            rows = connection.execute(
-                """
-                SELECT
-                    source,
-                    title,
-                    published_at,
-                    link,
-                    content_excerpt
-                FROM patch_event
-                ORDER BY published_at DESC, title ASC
-                LIMIT ?
-                """,
-                (normalized_limit,),
-            ).fetchall()
+        rows = connection.execute(
+            """
+            SELECT
+                source,
+                title,
+                published_at,
+                link,
+                content_excerpt,
+                content_full
+            FROM patch_event
+            ORDER BY published_at DESC, title ASC
+            LIMIT 60
+            """
+        ).fetchall()
 
-    matches = [
-        {
-            "source": str(row["source"] or "unknown"),
-            "title": str(row["title"] or "Untitled Patch"),
-            "published_at": row["published_at"],
-            "published_at_label": _format_reference_date(row["published_at"]),
-            "link": str(row["link"] or ""),
-            "excerpt": _clean_reference_excerpt(row["content_excerpt"]),
-        }
-        for row in rows
-    ]
+    selected = _select_patch_rows(rows, search_query, normalized_limit)
+
+    matches = []
+    any_truncated = False
+    for row in selected:
+        body, truncated = _patch_body_text(row["content_full"])
+        any_truncated = any_truncated or truncated
+        matches.append(
+            {
+                "source": str(row["source"] or "unknown"),
+                "title": str(row["title"] or "Untitled Patch"),
+                "published_at": row["published_at"],
+                "published_at_label": _format_reference_date(row["published_at"]),
+                "link": str(row["link"] or ""),
+                "excerpt": _clean_reference_excerpt(row["content_excerpt"]),
+                "body": body,
+                "truncated": truncated,
+            }
+        )
     if matches:
-        return {
+        result: dict[str, Any] = {
             "source": "local_sqlite",
             "available": True,
             "query": query,
             "matches": matches,
         }
+        if any_truncated:
+            result["note"] = (
+                "One or more patch notes were long and the body shown is partial "
+                "(it ends with `[...]`). Do not present it as a complete list; if the "
+                "user needs a change that is not shown, ask about that specific hero or item."
+            )
+        return result
 
     try:
         live_matches = _live_patch_matches(query, limit)

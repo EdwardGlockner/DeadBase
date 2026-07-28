@@ -14,6 +14,9 @@ class Settings:
     project_root: Path
     api_base_url: str = "https://api.deadlock-api.com"
     api_key: str | None = None
+    steam_api_base_url: str = "https://api.steampowered.com"
+    steam_api_key: str | None = None
+    deadlock_app_id: int = 1422450
 
     @property
     def data_dir(self) -> Path:
@@ -66,4 +69,7 @@ class Settings:
             project_root=root,
             api_base_url=os.environ.get("DEADLOCK_API_BASE_URL", "https://api.deadlock-api.com"),
             api_key=os.environ.get("DEADLOCK_API_KEY"),
+            steam_api_base_url=os.environ.get("STEAM_API_BASE_URL", "https://api.steampowered.com"),
+            steam_api_key=os.environ.get("STEAM_API_KEY"),
+            deadlock_app_id=int(os.environ.get("DEADLOCK_APP_ID", "1422450")),
         )

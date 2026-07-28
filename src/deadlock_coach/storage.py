@@ -48,6 +48,19 @@ def _connect(path: Path) -> sqlite3.Connection:
     return connection
 
 
+def _ensure_column(connection: sqlite3.Connection, table: str, column: str, column_type: str) -> None:
+    """Add a column to an existing table if a prior schema version lacked it.
+
+    `CREATE TABLE IF NOT EXISTS` never alters an already-created table, so
+    additive columns need this lightweight migration for local warehouses that
+    predate the column.
+    """
+
+    existing = {row["name"] for row in connection.execute(f"PRAGMA table_info({table})")}
+    if column not in existing:
+        connection.execute(f"ALTER TABLE {table} ADD COLUMN {column} {column_type}")
+
+
 def initialize_workspace(settings: Settings) -> None:
     for directory in (
         settings.raw_dir,
@@ -66,6 +79,7 @@ def initialize_workspace(settings: Settings) -> None:
 
     with closing(_connect(settings.warehouse_db_path)) as connection:
         connection.executescript(_read_schema("warehouse_schema.sql"))
+        _ensure_column(connection, "patch_event", "content_full", "TEXT")
         connection.commit()
 
     with closing(_connect(settings.memory_db_path)) as connection:
@@ -504,42 +518,125 @@ def normalize_patch_feed(settings: Settings, snapshot: SnapshotRecord, payload: 
             content = entry.get("content") or ""
             content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
             patch_id = f"{entry.get('source', 'unknown')}::{guid.get('text') or entry.get('link') or entry.get('title')}"
-            connection.execute(
-                """
-                INSERT INTO patch_event (
-                    patch_id,
-                    source,
-                    title,
-                    published_at,
-                    link,
-                    source_guid,
-                    content_hash,
-                    snapshot_id,
-                    content_excerpt
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(patch_id) DO UPDATE SET
-                    title = excluded.title,
-                    published_at = excluded.published_at,
-                    link = excluded.link,
-                    source_guid = excluded.source_guid,
-                    content_hash = excluded.content_hash,
-                    snapshot_id = excluded.snapshot_id,
-                    content_excerpt = excluded.content_excerpt
-                """,
-                (
-                    patch_id,
-                    entry.get("source", "unknown"),
-                    entry.get("title", "Untitled Patch"),
-                    entry.get("pub_date"),
-                    entry.get("link"),
-                    guid.get("text"),
-                    content_hash,
-                    snapshot.id,
-                    content[:280],
-                ),
+            _upsert_patch_event(
+                connection,
+                patch_id=patch_id,
+                source=entry.get("source", "unknown"),
+                title=entry.get("title", "Untitled Patch"),
+                published_at=entry.get("pub_date"),
+                link=entry.get("link"),
+                source_guid=guid.get("text"),
+                content_hash=content_hash,
+                snapshot_id=snapshot.id,
+                content=content,
             )
         connection.commit()
     return len(payload)
+
+
+def _upsert_patch_event(
+    connection: sqlite3.Connection,
+    *,
+    patch_id: str,
+    source: str,
+    title: str,
+    published_at: str | None,
+    link: str | None,
+    source_guid: str | None,
+    content_hash: str,
+    snapshot_id: int,
+    content: str,
+) -> None:
+    connection.execute(
+        """
+        INSERT INTO patch_event (
+            patch_id,
+            source,
+            title,
+            published_at,
+            link,
+            source_guid,
+            content_hash,
+            snapshot_id,
+            content_excerpt,
+            content_full
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(patch_id) DO UPDATE SET
+            title = excluded.title,
+            published_at = excluded.published_at,
+            link = excluded.link,
+            source_guid = excluded.source_guid,
+            content_hash = excluded.content_hash,
+            snapshot_id = excluded.snapshot_id,
+            content_excerpt = excluded.content_excerpt,
+            content_full = excluded.content_full
+        """,
+        (
+            patch_id,
+            source,
+            title,
+            published_at or "",
+            link or "",
+            source_guid,
+            content_hash,
+            snapshot_id,
+            content[:280],
+            content,
+        ),
+    )
+
+
+def normalize_steam_patch_feed(
+    settings: Settings,
+    snapshot: SnapshotRecord,
+    newsitems: list[dict[str, Any]],
+) -> int:
+    """Store Steam ISteamNews patch notes in the shared patch_event table.
+
+    Steam newsitems use a different shape than the community patch feed
+    (`gid`/`date`/`contents` instead of `guid`/`pub_date`/`content`), so they are
+    mapped here and stored with `source="steam"` and full body text.
+    """
+
+    stored = 0
+    with closing(_connect(settings.warehouse_db_path)) as connection:
+        for entry in newsitems:
+            gid = str(entry.get("gid") or "").strip()
+            if not gid:
+                continue
+            content = str(entry.get("contents") or "")
+            content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+            published_at = _steam_epoch_to_iso(entry.get("date"))
+            _upsert_patch_event(
+                connection,
+                patch_id=f"steam::{gid}",
+                source="steam",
+                title=str(entry.get("title") or "Untitled Patch"),
+                published_at=published_at,
+                link=str(entry.get("url") or ""),
+                source_guid=gid,
+                content_hash=content_hash,
+                snapshot_id=snapshot.id,
+                content=content,
+            )
+            stored += 1
+        connection.commit()
+    return stored
+
+
+def _steam_epoch_to_iso(value: Any) -> str:
+    """Convert a Steam unix-epoch `date` into an ISO-8601 UTC string.
+
+    patch_event.published_at is stored as ISO text (the community feed already
+    stores RSS `pub_date` strings), so Steam's integer epoch is normalized to
+    match and keep `ORDER BY published_at DESC` meaningful.
+    """
+
+    try:
+        epoch = int(value)
+    except (TypeError, ValueError):
+        return ""
+    return datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat()
 
 
 def normalize_leaderboard(

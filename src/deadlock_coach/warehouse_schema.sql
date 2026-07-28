@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS patch_event (
     source_guid TEXT,
     content_hash TEXT NOT NULL,
     snapshot_id INTEGER NOT NULL REFERENCES source_snapshot(id),
-    content_excerpt TEXT
+    content_excerpt TEXT,
+    content_full TEXT
 );
 
 CREATE TABLE IF NOT EXISTS player_match (

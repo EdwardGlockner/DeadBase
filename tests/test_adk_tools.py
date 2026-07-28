@@ -40,7 +40,14 @@ from app.tools import (
 from deadlock_coach.asset_service import ItemAsset
 from deadlock_coach.config import Settings
 from deadlock_coach.runtime_context import ActiveCoachContext, use_active_coach_context
-from deadlock_coach.storage import _connect, initialize_workspace, normalize_match_history, normalize_patch_feed, save_json_snapshot
+from deadlock_coach.storage import (
+    _connect,
+    initialize_workspace,
+    normalize_match_history,
+    normalize_patch_feed,
+    normalize_steam_patch_feed,
+    save_json_snapshot,
+)
 
 
 def fake_item_asset_factory(labels: dict[int, str]):
@@ -440,6 +447,54 @@ class AdkToolsTests(unittest.TestCase):
         self.assertEqual(result["source"], "deadlock_api_live")
         self.assertEqual(result["matches"][0]["title"], "Minor Update - 07-01-2026")
         self.assertIn("Slice and Dice", result["matches"][0]["excerpt"])
+
+    def _store_steam_patch(self, settings: Settings, gid: str, title: str, date: int, contents: str) -> None:
+        newsitems = [
+            {
+                "gid": gid,
+                "title": title,
+                "url": f"https://example/view/{gid}",
+                "contents": contents,
+                "feedname": "steam_community_announcements",
+                "date": date,
+                "tags": ["patchnotes"],
+            }
+        ]
+        snapshot = save_json_snapshot(
+            settings, "steam_news", "patches", "1422450", "https://example", newsitems
+        )
+        normalize_steam_patch_feed(settings, snapshot, newsitems)
+
+    def test_get_patch_context_tolerates_noisy_query_tokens(self) -> None:
+        with self._temporary_home() as root:
+            settings = Settings(project_root=root)
+            initialize_workspace(settings)
+            # An older post and a newer post; the newer one shares generic tokens
+            # so a naive match could wrongly win on recency.
+            self._store_steam_patch(settings, "1", "Minor Update - 04-30-2026", 1777000000, "[p]- old change[/p]")
+            self._store_steam_patch(settings, "2", "Minor Update - 07-01-2026", 1783000000, "[p]- new change[/p]")
+
+            # Query carries junk prefix tokens ("steam", "2026") that a LIKE
+            # substring match would choke on; token overlap should still pick 04-30.
+            result = get_patch_context(query="steam 2026-04-30 Minor Update - 04-30-2026", limit=1)
+
+        self.assertTrue(result["available"])
+        self.assertEqual(result["matches"][0]["title"], "Minor Update - 04-30-2026")
+
+    def test_get_patch_context_flags_truncated_body(self) -> None:
+        with self._temporary_home() as root:
+            settings = Settings(project_root=root)
+            initialize_workspace(settings)
+            long_contents = "".join(f"[p]- change number {i}[/p]" for i in range(3000))
+            self._store_steam_patch(settings, "big", "Gameplay Update - 05-22-2026", 1779000000, long_contents)
+
+            result = get_patch_context(query="Gameplay Update 05-22-2026", limit=1)
+
+        match = result["matches"][0]
+        self.assertTrue(match["truncated"])
+        self.assertTrue(match["body"].endswith("[...]"))
+        # A note must warn the coach not to present the partial body as complete.
+        self.assertIn("partial", result["note"].lower())
 
     def test_get_global_hero_stats_returns_pickrate_and_winrate_leaders(self) -> None:
         payload = [
