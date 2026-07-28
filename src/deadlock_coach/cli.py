@@ -11,6 +11,7 @@ from deadlock_coach.config import Settings
 from deadlock_coach.data_surface import inspect_data_surface, list_artifacts
 from deadlock_coach.knowledge_base import sync_reference_corpus, sync_wiki_reference_files
 from deadlock_coach.server import serve
+from deadlock_coach.steam_news_service import sync_steam_patches
 from deadlock_coach.storage import (
     initialize_workspace,
     normalize_patch_feed,
@@ -41,6 +42,23 @@ def build_parser() -> argparse.ArgumentParser:
     sync_subparsers = sync_parser.add_subparsers(dest="sync_command", required=True)
 
     sync_subparsers.add_parser("patches", help="Fetch the unified patch feed and store it locally")
+
+    steam_patches_parser = sync_subparsers.add_parser(
+        "steam-patches",
+        help="Fetch official Deadlock patch notes from the Steam news API and store them locally",
+    )
+    steam_patches_parser.add_argument(
+        "--count",
+        type=int,
+        default=20,
+        help="How many recent news posts to request from Steam before filtering",
+    )
+    steam_patches_parser.add_argument(
+        "--include-all-news",
+        action="store_true",
+        help="Store every news post, not just posts tagged as patch notes",
+    )
+    steam_patches_parser.add_argument("--json", action="store_true", help="Emit JSON instead of prose")
 
     leaderboard_parser = sync_subparsers.add_parser("leaderboard", help="Fetch a leaderboard snapshot")
     leaderboard_parser.add_argument(
@@ -185,6 +203,24 @@ def command_sync_patches(settings: Settings) -> int:
     return 0
 
 
+def command_sync_steam_patches(
+    settings: Settings,
+    count: int,
+    include_all_news: bool,
+    as_json: bool,
+) -> int:
+    result = sync_steam_patches(settings, count=count, include_all_news=include_all_news)
+    if as_json:
+        _print_json(result)
+        return 0
+
+    scope = "all news posts" if include_all_news else "patch-note posts"
+    print(f"Stored {result['stored_count']} / {result['fetched_count']} {scope} from Steam app {result['app_id']}")
+    print(f"Request: {result['request_url']}")
+    print(f"Snapshot: {result['snapshot_path']}")
+    return 0
+
+
 def command_sync_leaderboard(settings: Settings, region: str) -> int:
     client = DeadlockApiClient(settings)
     request_url, payload = client.fetch_json(f"/v1/leaderboard/{region}")
@@ -308,6 +344,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "sync":
         if args.sync_command == "patches":
             return command_sync_patches(settings)
+        if args.sync_command == "steam-patches":
+            return command_sync_steam_patches(settings, args.count, args.include_all_news, args.json)
         if args.sync_command == "leaderboard":
             return command_sync_leaderboard(settings, args.region)
         if args.sync_command == "player":

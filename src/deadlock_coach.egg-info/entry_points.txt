@@ -1,2 +1,0 @@
-[console_scripts]
-deadlock-coach = deadlock_coach.cli:main
