@@ -61,6 +61,7 @@ def backfill_match_metadata(
     hydrated = 0
     requests_made = 0
     unresolved: list[int] = []
+    failed: list[int] = []
     error: str | None = None
 
     for start in range(0, len(pending), batch_size):
@@ -72,6 +73,14 @@ def backfill_match_metadata(
                 BULK_MATCH_METADATA_ENDPOINT, params={"match_ids": batch}
             )
         except RuntimeError as exc:
+            # A batch whose matches upstream does not know yields HTTP 404;
+            # that must not starve later, hydratable batches. Anything else
+            # (rate limit, network) stops the run — progress is kept and a
+            # re-run resumes.
+            if "HTTP 404" in str(exc):
+                requests_made += 1
+                unresolved.extend(batch)
+                continue
             error = str(exc)
             break
         requests_made += 1
@@ -99,7 +108,13 @@ def backfill_match_metadata(
             if entry is None:
                 unresolved.append(match_id)
                 continue
-            normalize_match_metadata(settings, snapshot, match_id, entry)
+            try:
+                normalize_match_metadata(settings, snapshot, match_id, entry)
+            except Exception:
+                # Per-match transactions roll back on failure, so a malformed
+                # entry is skipped whole rather than left half-written.
+                failed.append(match_id)
+                continue
             hydrated += 1
 
     return {
@@ -108,6 +123,7 @@ def backfill_match_metadata(
         "remaining": len(pending_match_ids(settings)),
         "requests_made": requests_made,
         "unresolved_match_ids": unresolved,
+        "failed_match_ids": failed,
         "batch_size": batch_size,
         "error": error,
     }

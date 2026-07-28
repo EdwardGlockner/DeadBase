@@ -279,6 +279,8 @@ def command_sync_backfill_matches(
     )
     if result["unresolved_match_ids"]:
         print(f"Not returned by upstream: {result['unresolved_match_ids']}")
+    if result["failed_match_ids"]:
+        print(f"Skipped malformed upstream entries: {result['failed_match_ids']}")
     if result["error"] is not None:
         print(f"Stopped early: {result['error']}")
         print("Re-run `deadlock-coach sync backfill-matches` to continue.")

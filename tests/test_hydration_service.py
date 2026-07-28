@@ -77,12 +77,22 @@ def _metadata_entry(match_id: int) -> dict:
 
 
 class FakeBulkMetadataClient:
-    """Serves the bulk metadata endpoint for a fixed set of known matches."""
+    """Serves the bulk metadata endpoint for a fixed set of known matches.
 
-    def __init__(self, known_match_ids: set[int] | None = None, fail_after_requests: int | None = None) -> None:
+    Mirrors live behaviour: a batch containing no known match at all yields
+    HTTP 404, which DeadlockApiClient surfaces as a RuntimeError.
+    """
+
+    def __init__(
+        self,
+        known_match_ids: set[int] | None = None,
+        fail_after_requests: int | None = None,
+        malformed_match_ids: set[int] | None = None,
+    ) -> None:
         self.known_match_ids = known_match_ids
         self.requested_batches: list[list[int]] = []
         self.fail_after_requests = fail_after_requests
+        self.malformed_match_ids = malformed_match_ids or set()
 
     def fetch_json(self, path: str, params: dict | None = None):
         if path != "/v1/matches/metadata":
@@ -91,11 +101,20 @@ class FakeBulkMetadataClient:
             raise RuntimeError("simulated upstream failure")
         match_ids = [int(match_id) for match_id in (params or {}).get("match_ids", [])]
         self.requested_batches.append(match_ids)
-        served = [
-            _metadata_entry(match_id)
-            for match_id in match_ids
-            if self.known_match_ids is None or match_id in self.known_match_ids
-        ]
+        served = []
+        for match_id in match_ids:
+            if self.known_match_ids is not None and match_id not in self.known_match_ids:
+                continue
+            if match_id in self.malformed_match_ids:
+                entry = _metadata_entry(match_id)
+                entry["match_info"]["players"] = [None]
+                served.append(entry)
+            else:
+                served.append(_metadata_entry(match_id))
+        if not served:
+            raise RuntimeError(
+                "HTTP 404 for https://api.deadlock-api.com/v1/matches/metadata: No matches found"
+            )
         return "https://api.deadlock-api.com/v1/matches/metadata", served
 
 
@@ -246,6 +265,42 @@ class HydrationServiceTests(unittest.TestCase):
             self.assertEqual(result["remaining"], 3)
             self.assertIn("simulated upstream failure", str(result["error"]))
             self.assertEqual(len(self._hydrated_match_ids(settings)), 2)
+
+    def test_backfill_continues_past_a_batch_of_only_unknown_matches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            settings = Settings(project_root=Path(tmpdir))
+            initialize_workspace(settings)
+            # Newest first, so the two unknown matches form the first batch —
+            # upstream answers that batch with HTTP 404, which must not starve
+            # the later, hydratable batches.
+            self._seed_history(settings, [101, 102, 103, 104, 105])
+
+            client = FakeBulkMetadataClient(known_match_ids={101, 102, 103})
+            result = backfill_match_metadata(settings, client=client, batch_size=2)
+
+            self.assertEqual(result["hydrated"], 3)
+            self.assertEqual(sorted(result["unresolved_match_ids"]), [104, 105])
+            self.assertIsNone(result["error"])
+            self.assertEqual(self._hydrated_match_ids(settings), {101, 102, 103})
+
+    def test_backfill_skips_malformed_entries_and_keeps_going(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            settings = Settings(project_root=Path(tmpdir))
+            initialize_workspace(settings)
+            self._seed_history(settings, [101, 102, 103])
+
+            client = FakeBulkMetadataClient(malformed_match_ids={102})
+            result = backfill_match_metadata(settings, client=client)
+
+            self.assertEqual(result["hydrated"], 2)
+            self.assertEqual(result["failed_match_ids"], [102])
+            self.assertEqual(self._hydrated_match_ids(settings), {101, 103})
+            # The malformed match must not be half-written.
+            with closing(_connect(settings.warehouse_db_path)) as connection:
+                purchases = connection.execute(
+                    "SELECT COUNT(*) AS purchase_count FROM item_purchase WHERE match_id = 102"
+                ).fetchone()
+            self.assertEqual(int(purchases["purchase_count"]), 0)
 
     def test_pending_match_ids_orders_newest_history_first(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
