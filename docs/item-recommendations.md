@@ -190,6 +190,29 @@ is bounded by the hydrated count, not the history count. `/v1/matches/metadata` 
 bulk `match_ids` at 10 req/min, so backfilling the full history is a handful of
 requests rather than one per match.
 
+## Disclosure
+
+Every statistic carries its patch window, rank bracket, and sample size. Below the
+sample floor the coach declines to rank rather than reporting a weak number.
+
+Attribution is not a caveat here, it is part of the claim. Under the rank decision
+above, the *normal* case is a recommendation drawn from badge 90+ while the player sits
+lower — so "44.8% of Sevens buy Unstoppable into Knockdown" is a statement about
+high-badge players, and presenting it unattributed to a badge-64 player states
+something different from what was measured. Disclosing only on degradation would
+suppress exactly the common case.
+
+Declining below the floor is warranted because thin samples have produced confident
+reversals: Crippling Headshot moved from +1.4 to −1.5 on window width alone.
+
+Mechanics need no attribution — "Knockdown applies stun, Unstoppable grants stun
+immunity" holds at every bracket and patch. Answers should therefore lead with the
+mechanism and follow with the evidence, so provenance attaches to the statistical half
+only and does not bury the advice.
+
+Unlike the other decisions recorded here, this one is presentation-layer and cheap to
+revise; it does not constrain schema or tool signatures.
+
 ## Confounds already found
 
 Three separate metrics have looked like signal and were not. Any new metric should be
