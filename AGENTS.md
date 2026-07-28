@@ -59,3 +59,22 @@ Ask the user: Option A (simple single-project) or Option B (full CI/CD pipeline 
 - **Run Python with `uv`**: `uv run python script.py`. Run `agents-cli install` first.
 - **Stop on repeated errors**: If the same error appears 3+ times, fix the root cause instead of retrying.
 - **Terraform conflicts** (Error 409): Use `terraform import` instead of retrying creation.
+
+---
+
+## Agent skills
+
+Matt Pocock's engineering skills are installed in `.claude/skills/`. Main flow for big work:
+`/wayfinder` → `/grill-with-docs` → `/to-spec` → `/to-tickets` → `/implement`.
+
+### Issue tracker
+
+Issues and specs live as **GitHub Issues** on `EdwardGlockner/DeadBase` (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five canonical roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at repo root. See `docs/agents/domain.md`.
