@@ -94,6 +94,26 @@ hero assets on a 7-day TTL, but patches have shipped a day apart (06-30, 07-01).
 properties must be invalidated when a new `patch_event` appears, otherwise the
 mechanical layer — the half users will trust most — can be a week stale.
 
+## Rank scoping
+
+Recommendations are sourced from **high badge (90+)**; the player's own bracket is used
+only as the comparison. The gap between the two is the coaching content.
+
+The two are not interchangeable. Rank-matched data describes what is *normal* at a
+bracket, not what is *correct*. Measured for Haze into Abrams in lane, current patch:
+
+| band | denom | Weakening HS | Crippling HS | Toxic Bullets |
+| --- | --- | --- | --- | --- |
+| badge 55–75 | 3,692 | **−0.6** | +0.0 | +2.6 |
+| badge 90+ | 2,897 | **+2.0** | +0.5 | +2.4 |
+
+Players below high badge largely do not adapt their anti-heal buys into a sustain
+bruiser. A recommender ranking on the player's own bracket would conclude Weakening
+Headshot is not a counter to Abrams, and hand the bracket's blind spot back as advice.
+
+Sample size is not a reason to prefer either band — the lower bracket has *more* data,
+not less.
+
 ## Confounds already found
 
 Three separate metrics have looked like signal and were not. Any new metric should be
