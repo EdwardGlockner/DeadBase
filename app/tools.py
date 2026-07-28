@@ -24,6 +24,7 @@ from deadlock_coach.agent_orchestration import build_response_envelope
 from deadlock_coach.coach_service import DEFAULT_WINDOW_MATCHES, account_summary_payload, list_tracked_accounts, summarize_account
 from deadlock_coach.config import Settings
 from deadlock_coach.knowledge_base import query_local_knowledge_tables, retrieve_grounded_knowledge_context, search_local_knowledge
+from deadlock_coach.mechanics_service import read_latest_item_mechanics, sync_item_mechanics
 from deadlock_coach.runtime_context import ActiveCoachContext, get_active_coach_context
 from deadlock_coach.storage import _connect
 
@@ -1898,6 +1899,51 @@ def get_item_reference(item_name: str) -> dict[str, Any]:
         "available": True,
         "page": page,
     }
+
+
+def get_item_mechanics(item_name: str) -> dict[str, Any]:
+    """Return what a shop item actually does: tier, cost, slot, activation, and properties.
+
+    Use this when advice depends on an item's effect — what it grants, counters,
+    or applies — rather than lore or meta statistics. Mechanics come from the
+    local warehouse and are synced from the upstream item assets on first use.
+    The structured `properties` are the reliable signal; the sanitised
+    `description` is supporting prose.
+    """
+
+    settings = _settings()
+    requested = str(item_name or "").strip()
+    if not requested:
+        return {
+            "source": "local_warehouse",
+            "kind": "item_mechanics",
+            "available": False,
+            "error": "Item name is required.",
+        }
+
+    result = read_latest_item_mechanics(settings, requested)
+    if result is None:
+        try:
+            sync_item_mechanics(settings)
+        except RuntimeError as exc:
+            return {
+                "source": "local_warehouse",
+                "kind": "item_mechanics",
+                "available": False,
+                "requested_item": requested,
+                "error": f"Item mechanics unavailable: {exc}",
+            }
+        result = read_latest_item_mechanics(settings, requested)
+
+    if result is None:
+        return {
+            "source": "local_warehouse",
+            "kind": "item_mechanics",
+            "available": False,
+            "requested_item": requested,
+            "error": "Item mechanics sync stored no items.",
+        }
+    return result
 
 
 def get_recent_matches(

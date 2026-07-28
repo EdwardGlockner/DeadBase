@@ -22,6 +22,7 @@ from app.tools import (
     get_global_item_flow,
     get_global_item_stats,
     get_hero_pool_analysis,
+    get_item_mechanics,
     get_hero_reference,
     get_item_reference,
     get_patch_context,
@@ -690,6 +691,215 @@ class AdkToolsTests(unittest.TestCase):
         self.assertEqual(result["rank_filter"]["min_average_badge"], 116)
         self.assertEqual(result["rank_filter"]["max_average_badge"], 116)
         self.assertEqual(fetch_mock.call_count, 2)
+
+    ITEM_ASSETS_URL = "https://api.deadlock-api.com/v1/assets/items"
+
+    @staticmethod
+    def _item_assets_payload() -> list[dict[str, object]]:
+        contaminated_description = (
+            "Release an expanding ice blast that deals "
+            '<svg width="128" height="128" viewBox="0 0 128 128" fill="white" xmlns="http://www.w3.org/2000/svg">\n'
+            '<path d="M53.7875 20.0238C48.6533 13.3022 40.8042 9 32.0027 9C16.5345 9 4 22.2789 4 38.6558Z" fill="white"/>\n'
+            "</svg>\n"
+            '<span class="inline-attribute-label Damage" style="color: #fff;">Spirit Damage</span> '
+            "and applies a movement slow. Deals bonus damage vs &quot;chilled&quot; enemies &amp; slows them."
+        )
+        return [
+            {
+                "id": 1976391348,
+                "class_name": "upgrade_cold_front",
+                "name": "Cold Front",
+                "type": "upgrade",
+                "shopable": True,
+                "item_tier": 2,
+                "cost": 1600,
+                "item_slot_type": "spirit",
+                "is_active_item": True,
+                "description": {"desc": contaminated_description},
+                "properties": {
+                    "AbilityCooldown": {
+                        "css_class": "cooldown",
+                        "icon": "https://assets-bucket.deadlock-api.com/assets-api-res/images/upgrades/property_cooldown.png",
+                        "label": "Cooldown",
+                        "postfix": "s",
+                        "value": 25.0,
+                    },
+                    "SlowDuration": {
+                        "css_class": "duration",
+                        "label": "Slow Duration",
+                        "postfix": "s",
+                        "value": "4",
+                    },
+                    "BrandNewPatchProperty": {
+                        "label": "New Patch Property",
+                        "value": "42",
+                    },
+                },
+            },
+            {
+                "id": 3977876567,
+                "class_name": "upgrade_healbane",
+                "name": "Healbane",
+                "type": "upgrade",
+                "shopable": True,
+                "item_tier": 2,
+                "cost": 1250,
+                "item_slot_type": "vitality",
+                "is_active_item": False,
+                "description": {"desc": "Applies <b>healing reduction</b> to enemies you damage."},
+                "properties": {
+                    "HealAmpReductionPercent": {
+                        "css_class": "damage",
+                        "label": "Healing Reduction",
+                        "postfix": "%",
+                        "value": "-40",
+                    },
+                },
+            },
+            {
+                "id": 1009029159,
+                "class_name": "ability_ava",
+                "name": "Ava",
+                "type": "ability",
+                "description": {"desc": "Turn to shadows and possess Ava."},
+                "properties": {},
+            },
+            {
+                "id": 600000001,
+                "class_name": "upgrade_disabled_test_item",
+                "name": "Removed Test Item",
+                "type": "upgrade",
+                "shopable": False,
+                "item_tier": 1,
+                "cost": 500,
+                "item_slot_type": "weapon",
+                "is_active_item": False,
+                "description": {"desc": "Not purchasable."},
+                "properties": {},
+            },
+        ]
+
+    def test_get_item_mechanics_syncs_once_and_returns_sanitised_mechanics(self) -> None:
+        with self._temporary_home():
+            with patch(
+                "app.tools.DeadlockApiClient.fetch_json",
+                return_value=(self.ITEM_ASSETS_URL, self._item_assets_payload()),
+            ) as fetch_mock:
+                result = get_item_mechanics("Cold Front")
+
+        self.assertEqual(fetch_mock.call_count, 1)
+        self.assertTrue(result["available"])
+        self.assertEqual(result["source"], "local_warehouse")
+        self.assertIsNotNone(result["snapshot_id"])
+        self.assertIsNotNone(result["fetched_at"])
+
+        item = result["item"]
+        self.assertEqual(item["name"], "Cold Front")
+        self.assertEqual(item["tier"], 2)
+        self.assertEqual(item["cost"], 1600)
+        self.assertEqual(item["slot"], "spirit")
+        self.assertEqual(item["activation"], "active")
+
+        properties = item["properties"]
+        self.assertEqual(properties["AbilityCooldown"]["value"], "25.0")
+        self.assertEqual(properties["AbilityCooldown"]["label"], "Cooldown")
+        self.assertEqual(properties["AbilityCooldown"]["postfix"], "s")
+        self.assertEqual(properties["SlowDuration"]["value"], "4")
+        # A property key introduced by a new patch is stored and returned
+        # without any schema change.
+        self.assertEqual(properties["BrandNewPatchProperty"]["value"], "42")
+
+    def test_get_item_mechanics_strips_svg_and_markup_from_description(self) -> None:
+        with self._temporary_home():
+            with patch(
+                "app.tools.DeadlockApiClient.fetch_json",
+                return_value=(self.ITEM_ASSETS_URL, self._item_assets_payload()),
+            ):
+                result = get_item_mechanics("Cold Front")
+
+        description = result["item"]["description"]
+        self.assertIn("Release an expanding ice blast", description)
+        self.assertIn("Spirit Damage", description)
+        self.assertIn('"chilled" enemies & slows them', description)
+        lowered = description.lower()
+        self.assertNotIn("<", description)
+        self.assertNotIn(">", description)
+        self.assertNotIn("svg", lowered)
+        self.assertNotIn("path", lowered)
+        self.assertNotIn("viewbox", lowered)
+        self.assertNotIn("m53.7875", lowered)
+        self.assertNotIn("inline-attribute-label", description)
+        self.assertNotIn("&quot;", description)
+        self.assertNotIn("&amp;", description)
+
+    def test_get_item_mechanics_reports_passive_items_and_is_case_insensitive(self) -> None:
+        with self._temporary_home():
+            with patch(
+                "app.tools.DeadlockApiClient.fetch_json",
+                return_value=(self.ITEM_ASSETS_URL, self._item_assets_payload()),
+            ):
+                result = get_item_mechanics("healbane")
+
+        self.assertTrue(result["available"])
+        item = result["item"]
+        self.assertEqual(item["name"], "Healbane")
+        self.assertEqual(item["activation"], "passive")
+        self.assertEqual(item["properties"]["HealAmpReductionPercent"]["value"], "-40")
+        self.assertIn("healing reduction", item["description"].lower())
+
+    def test_get_item_mechanics_prefers_local_snapshot_after_first_sync(self) -> None:
+        with self._temporary_home():
+            with patch(
+                "app.tools.DeadlockApiClient.fetch_json",
+                return_value=(self.ITEM_ASSETS_URL, self._item_assets_payload()),
+            ):
+                get_item_mechanics("Cold Front")
+
+            with patch(
+                "app.tools.DeadlockApiClient.fetch_json",
+                side_effect=AssertionError("second lookup should read the local warehouse"),
+            ):
+                result = get_item_mechanics("Healbane")
+
+        self.assertTrue(result["available"])
+        self.assertEqual(result["item"]["name"], "Healbane")
+
+    def test_get_item_mechanics_returns_explicit_not_found_for_unknown_item(self) -> None:
+        with self._temporary_home():
+            with patch(
+                "app.tools.DeadlockApiClient.fetch_json",
+                return_value=(self.ITEM_ASSETS_URL, self._item_assets_payload()),
+            ):
+                result = get_item_mechanics("Definitely Not An Item")
+
+        self.assertFalse(result["available"])
+        self.assertEqual(result["status"], "item_not_found")
+        self.assertEqual(result["requested_item"], "Definitely Not An Item")
+
+    def test_get_item_mechanics_excludes_abilities_and_unshopable_items(self) -> None:
+        with self._temporary_home():
+            with patch(
+                "app.tools.DeadlockApiClient.fetch_json",
+                return_value=(self.ITEM_ASSETS_URL, self._item_assets_payload()),
+            ):
+                ability_result = get_item_mechanics("Ava")
+                unshopable_result = get_item_mechanics("Removed Test Item")
+
+        self.assertFalse(ability_result["available"])
+        self.assertEqual(ability_result["status"], "item_not_found")
+        self.assertFalse(unshopable_result["available"])
+        self.assertEqual(unshopable_result["status"], "item_not_found")
+
+    def test_get_item_mechanics_reports_unavailable_when_sync_fails(self) -> None:
+        with self._temporary_home():
+            with patch(
+                "app.tools.DeadlockApiClient.fetch_json",
+                side_effect=RuntimeError("upstream failed"),
+            ):
+                result = get_item_mechanics("Cold Front")
+
+        self.assertFalse(result["available"])
+        self.assertIn("upstream failed", result["error"])
 
     def test_get_global_item_flow_prefers_local_snapshot_when_available(self) -> None:
         with self._temporary_home() as root:

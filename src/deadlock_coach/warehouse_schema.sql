@@ -262,6 +262,35 @@ CREATE TABLE IF NOT EXISTS player_performance_curve_point (
 CREATE INDEX IF NOT EXISTS idx_player_performance_curve_snapshot
     ON player_performance_curve_point(snapshot_id, game_time ASC);
 
+CREATE TABLE IF NOT EXISTS item_mechanic (
+    snapshot_id INTEGER NOT NULL REFERENCES source_snapshot(id) ON DELETE CASCADE,
+    item_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    item_tier INTEGER,
+    cost INTEGER,
+    item_slot_type TEXT,
+    is_active_item INTEGER,
+    description TEXT,
+    raw_json TEXT NOT NULL,
+    PRIMARY KEY (snapshot_id, item_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_item_mechanic_name
+    ON item_mechanic(snapshot_id, name);
+
+CREATE TABLE IF NOT EXISTS item_mechanic_property (
+    snapshot_id INTEGER NOT NULL,
+    item_id INTEGER NOT NULL,
+    property_key TEXT NOT NULL,
+    value TEXT,
+    label TEXT,
+    postfix TEXT,
+    css_class TEXT,
+    PRIMARY KEY (snapshot_id, item_id, property_key),
+    FOREIGN KEY (snapshot_id, item_id)
+        REFERENCES item_mechanic(snapshot_id, item_id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS artifact_run (
     artifact_id TEXT PRIMARY KEY,
     artifact_type TEXT NOT NULL,

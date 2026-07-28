@@ -10,6 +10,7 @@ from deadlock_coach.analytics_service import parse_cli_param, sync_analytics_que
 from deadlock_coach.config import Settings
 from deadlock_coach.data_surface import inspect_data_surface, list_artifacts
 from deadlock_coach.knowledge_base import sync_reference_corpus, sync_wiki_reference_files
+from deadlock_coach.mechanics_service import sync_item_mechanics
 from deadlock_coach.server import serve
 from deadlock_coach.steam_news_service import sync_steam_patches
 from deadlock_coach.storage import (
@@ -76,6 +77,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=0,
         help="Number of recent matches to hydrate with /matches/{match_id}/metadata",
     )
+
+    item_mechanics_parser = sync_subparsers.add_parser(
+        "item-mechanics",
+        help="Fetch all item assets in one request and normalize shopable item mechanics",
+    )
+    item_mechanics_parser.add_argument("--json", action="store_true", help="Emit JSON instead of prose")
 
     analytics_parser = sync_subparsers.add_parser("analytics", help="Fetch and store a raw analytics snapshot")
     analytics_parser.add_argument(
@@ -243,6 +250,17 @@ def command_sync_player(settings: Settings, account_id: int, hydrate_matches: in
     return 0
 
 
+def command_sync_item_mechanics(settings: Settings, as_json: bool) -> int:
+    result = sync_item_mechanics(settings)
+    if as_json:
+        _print_json(result)
+        return 0
+
+    print(f"Stored mechanics for {result['items_stored']} shopable items from {result['request_url']}")
+    print(f"Snapshot: {result['snapshot_path']}")
+    return 0
+
+
 def command_sync_analytics(
     settings: Settings,
     endpoint: str,
@@ -350,6 +368,8 @@ def main(argv: list[str] | None = None) -> int:
             return command_sync_leaderboard(settings, args.region)
         if args.sync_command == "player":
             return command_sync_player(settings, args.account_id, args.hydrate_matches)
+        if args.sync_command == "item-mechanics":
+            return command_sync_item_mechanics(settings, args.json)
         if args.sync_command == "analytics":
             return command_sync_analytics(settings, args.endpoint, args.param, args.patch_window_label, args.json)
 
