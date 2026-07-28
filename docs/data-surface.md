@@ -46,6 +46,8 @@ This document reflects the public Deadlock data surface inspected before impleme
 - Hero MMR history: `/v1/players/{account_id}/mmr-history/{hero_id}`
 - Batch hero MMR: `/v1/players/mmr/{hero_id}`
 - SQL catalog and schema inspection: `/v1/sql/tables`, `/v1/sql/tables/{table}/schema`
+- Arbitrary SQL queries: `/v1/sql` (see the addendum below)
+- Bulk match metadata: `/v1/matches/metadata` (accepts many `match_ids` per request)
 - Database dumps for offline analysis: [data dumps](https://deadlock-api.com/data-dumps)
 
 ### Partially available or constrained
@@ -120,3 +122,42 @@ As of July 9, 2026, the repo still only normalizes and exposes a narrow slice of
   - versioned asset and generic-data ingestion for more reliable game-mechanics grounding
 
 That means most current product misses are not because the upstream API lacks data. They are mostly because we have not yet turned those surfaces into durable local evidence the coach can query reliably.
+
+## Addendum, July 28, 2026: the SQL surface
+
+The original audit listed the SQL *catalog* endpoints but missed `/v1/sql`, which
+executes arbitrary queries against the upstream ClickHouse database. It is the most
+capable surface available and it changes what is feasible.
+
+`match_player` holds one row per player per match across 186 columns, including
+`items.item_id` with `items.game_time_s` and `items.net_worth_at_buy`, plus `team`,
+`hero_id`, `assigned_lane`, `death_details.*`, `objectives.*`,
+`mid_boss.destroyed_time_s`, and `stats.heal_prevented`.
+
+Two consequences matter:
+
+1. **Cross-team questions become answerable.** The analytics endpoints cannot express
+   "what did players buy when an enemy owned item X", because no `enemy_item_ids`
+   filter exists. A self-join on `match_id` across opposing teams can. Measured
+   2026-07-28: Seven players bought Unstoppable in 31.9% of matches where no enemy
+   owned Knockdown, and 44.8% where one did, over 375,387 matches.
+2. **Some effects are measured rather than inferred.** `stats.heal_prevented` and
+   `stats.heal_lost` quantify anti-heal impact directly, instead of proxying it through
+   win rate or pick share.
+
+Rate limits are the binding constraint and make this an offline mining surface, never a
+per-request one:
+
+| endpoint | IP | with API key |
+| --- | --- | --- |
+| `/v1/sql` | 2 req/min, 20 req/hr | 10 req/min |
+| `/v1/matches/metadata` | 10 req/min | 10 req/10s |
+
+`DEADLOCK_API_KEY` is already read at `config.py:71` and sent as `X-API-KEY` at
+`api.py:31`, but is absent from `.env.example`. Obtaining one is a 30× throughput
+change on `/v1/sql` for no code change.
+
+Two entries above are also now stale: item analytics *is* normalized (see
+`item_analytics_stat`, `item_flow_*` in `warehouse_schema.sql`), and asset ingestion for
+mechanics grounding is designed in
+[`item-recommendations.md`](item-recommendations.md).
