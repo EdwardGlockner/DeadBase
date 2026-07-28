@@ -21,6 +21,7 @@ from app.tools import (
     get_global_hero_stats,
     get_global_item_flow,
     get_global_item_stats,
+    get_hero_item_stats,
     get_hero_pool_analysis,
     get_hero_reference,
     get_item_reference,
@@ -40,6 +41,7 @@ from app.tools import (
 from deadlock_coach.asset_service import ItemAsset
 from deadlock_coach.config import Settings
 from deadlock_coach.runtime_context import ActiveCoachContext, use_active_coach_context
+from deadlock_coach.signature_service import sync_hero_signature
 from deadlock_coach.storage import (
     _connect,
     initialize_workspace,
@@ -690,6 +692,175 @@ class AdkToolsTests(unittest.TestCase):
         self.assertEqual(result["rank_filter"]["min_average_badge"], 116)
         self.assertEqual(result["rank_filter"]["max_average_badge"], 116)
         self.assertEqual(fetch_mock.call_count, 2)
+
+    SIGNATURE_HERO_LABELS = {15: "Seven", 16: "Ivy", 17: "Calico"}
+    SIGNATURE_ITEM_LABELS = {401: "Boots", 402: "Escalating Exposure", 403: "Healbane"}
+
+    @classmethod
+    def _hero_signature_fetch_fake(cls, call_log: list[tuple[str, dict]] | None = None):
+        """Fake upstream keyed by path. Item 401 is universal (95% everywhere,
+        very high win rate); 402 is Seven's distinctive item (60% on Seven vs
+        10% global, low win rate); 403 is fringe everywhere. Hero 17 is playable
+        but has no analytics rows; hero 99 is not playable."""
+
+        def fake(path: str, params: dict | None = None) -> tuple[str, object]:
+            params = dict(params or {})
+            url = f"https://api.deadlock-api.com{path}"
+            if call_log is not None:
+                call_log.append((path, params))
+            if path == "/v1/assets/heroes":
+                return url, [
+                    {"id": 15, "name": "Seven", "player_selectable": True, "disabled": False},
+                    {"id": 16, "name": "Ivy", "player_selectable": True, "disabled": False},
+                    {"id": 17, "name": "Calico", "player_selectable": True, "disabled": False},
+                    {"id": 99, "name": "Prototype Hero", "player_selectable": False, "disabled": True},
+                ]
+            if path == "/v1/analytics/hero-stats":
+                return url, [
+                    {"hero_id": 15, "matches": 1000, "wins": 520, "losses": 480},
+                    {"hero_id": 16, "matches": 500, "wins": 250, "losses": 250},
+                ]
+            if path == "/v1/analytics/item-stats":
+                hero_id = params.get("hero_id")
+                if hero_id is None:
+                    return url, [
+                        {"item_id": 401, "matches": 1425, "wins": 1300, "losses": 125},
+                        {"item_id": 402, "matches": 150, "wins": 60, "losses": 90},
+                        {"item_id": 403, "matches": 75, "wins": 40, "losses": 35},
+                    ]
+                if hero_id == 15:
+                    return url, [
+                        {"item_id": 401, "matches": 950, "wins": 900, "losses": 50},
+                        {"item_id": 402, "matches": 600, "wins": 250, "losses": 350},
+                        {"item_id": 403, "matches": 50, "wins": 20, "losses": 30},
+                    ]
+                if hero_id == 16:
+                    return url, [{"item_id": 401, "matches": 475, "wins": 300, "losses": 175}]
+                if hero_id == 17:
+                    return url, []
+            raise AssertionError(f"unexpected upstream fetch: {path} {params}")
+
+        return fake
+
+    def _run_signature_sync(self, **sync_kwargs) -> list[tuple[str, dict]]:
+        call_log: list[tuple[str, dict]] = []
+        with patch(
+            "app.tools.DeadlockApiClient.fetch_json",
+            side_effect=self._hero_signature_fetch_fake(call_log),
+        ):
+            sync_hero_signature(Settings.from_env(), **sync_kwargs)
+        return call_log
+
+    def _signature_tool_call(self, hero_name: str, **tool_kwargs) -> dict:
+        with patch(
+            "app.tools.DeadlockApiClient.fetch_json",
+            side_effect=self._hero_signature_fetch_fake(),
+        ):
+            with patch(
+                "app.tools.hero_label",
+                side_effect=lambda _settings, hero_id, client=None: self.SIGNATURE_HERO_LABELS.get(hero_id, f"Hero {hero_id}"),
+            ):
+                with patch(
+                    "app.tools.item_label",
+                    side_effect=lambda _settings, item_id, client=None: self.SIGNATURE_ITEM_LABELS.get(item_id, f"Item {item_id}"),
+                ):
+                    return get_hero_item_stats(hero_name, **tool_kwargs)
+
+    def test_get_hero_item_stats_ranks_distinctive_items_above_universal_ones(self) -> None:
+        with self._temporary_home():
+            call_log = self._run_signature_sync()
+            result = self._signature_tool_call("Seven")
+
+        self.assertTrue(result["available"])
+        self.assertEqual(result["ranking_basis"], "pick_share_lift")
+
+        signature = result["signature"]
+        # Escalating Exposure (60% on Seven vs 10% global) must outrank Boots,
+        # which is bought universally and has a far higher win rate.
+        self.assertEqual(signature[0]["item_label"], "Escalating Exposure")
+        self.assertEqual(signature[0]["pick_share_lift"], 50.0)
+        universal = next(row for row in signature if row["item_label"] == "Boots")
+        self.assertEqual(universal["pick_share_lift"], 0.0)
+        self.assertGreater(signature[0]["pick_share_lift"], universal["pick_share_lift"])
+
+        # One roster request, one hero-stats denominator request, one global
+        # baseline, and one item-stats request per playable hero. The
+        # non-playable hero 99 must not be fetched.
+        analytics_hero_ids = [
+            params.get("hero_id")
+            for path, params in call_log
+            if path == "/v1/analytics/item-stats" and params.get("hero_id") is not None
+        ]
+        self.assertEqual(sorted(analytics_hero_ids), [15, 16, 17])
+        self.assertEqual(sum(1 for path, params in call_log if path == "/v1/analytics/hero-stats"), 1)
+        self.assertEqual(
+            sum(1 for path, params in call_log if path == "/v1/analytics/item-stats" and "hero_id" not in params),
+            1,
+        )
+
+    def test_get_hero_item_stats_uses_true_hero_match_denominator(self) -> None:
+        with self._temporary_home():
+            self._run_signature_sync()
+            result = self._signature_tool_call("Seven")
+
+        # Seven has 1000 matches; the most-purchased item was bought in 950 of
+        # them. An inferred denominator would report 100% — the true one is 95%.
+        universal = next(row for row in result["signature"] if row["item_label"] == "Boots")
+        self.assertEqual(universal["hero_pick_share"], 95.0)
+        self.assertEqual(result["sample_size"]["hero_matches"], 1000)
+
+    def test_get_hero_item_stats_carries_patch_window_bracket_and_sample_size(self) -> None:
+        with self._temporary_home():
+            self._run_signature_sync(patch_window_label="patch-2026-07-24")
+            result = self._signature_tool_call("Seven")
+
+        self.assertEqual(result["patch_window"], "patch-2026-07-24")
+        self.assertEqual(result["rank_bracket"]["min_average_badge"], 90)
+        self.assertEqual(result["sample_size"]["hero_matches"], 1000)
+        self.assertEqual(result["sample_size"]["baseline_matches"], 1500)
+
+    def test_get_hero_item_stats_bracket_is_configurable_not_hardcoded(self) -> None:
+        previous = os.environ.get("DEADLOCK_RECOMMENDATION_MIN_BADGE")
+        os.environ["DEADLOCK_RECOMMENDATION_MIN_BADGE"] = "55"
+        try:
+            with self._temporary_home():
+                call_log = self._run_signature_sync()
+                result = self._signature_tool_call("Seven")
+        finally:
+            if previous is None:
+                os.environ.pop("DEADLOCK_RECOMMENDATION_MIN_BADGE", None)
+            else:
+                os.environ["DEADLOCK_RECOMMENDATION_MIN_BADGE"] = previous
+
+        analytics_calls = [params for path, params in call_log if path.startswith("/v1/analytics/")]
+        self.assertTrue(analytics_calls)
+        for params in analytics_calls:
+            self.assertEqual(params.get("min_average_badge"), 55)
+        self.assertEqual(result["rank_bracket"]["min_average_badge"], 55)
+
+    def test_get_hero_item_stats_returns_no_data_before_any_sync(self) -> None:
+        with self._temporary_home():
+            result = self._signature_tool_call("Seven")
+
+        self.assertFalse(result["available"])
+        self.assertEqual(result["status"], "no_data")
+
+    def test_get_hero_item_stats_returns_explicit_response_for_unknown_hero(self) -> None:
+        with self._temporary_home():
+            self._run_signature_sync()
+            result = self._signature_tool_call("Definitely Not A Hero")
+
+        self.assertFalse(result["available"])
+        self.assertEqual(result["status"], "unknown_hero")
+        self.assertEqual(result["requested_hero"], "Definitely Not A Hero")
+
+    def test_get_hero_item_stats_returns_explicit_response_for_hero_without_signature(self) -> None:
+        with self._temporary_home():
+            self._run_signature_sync()
+            result = self._signature_tool_call("Calico")
+
+        self.assertFalse(result["available"])
+        self.assertEqual(result["status"], "no_signature_for_hero")
 
     def test_get_global_item_flow_prefers_local_snapshot_when_available(self) -> None:
         with self._temporary_home() as root:

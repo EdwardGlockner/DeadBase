@@ -17,6 +17,9 @@ class Settings:
     steam_api_base_url: str = "https://api.steampowered.com"
     steam_api_key: str | None = None
     deadlock_app_id: int = 1422450
+    # Statistics behind recommendations are sourced at high badge (ADR-0003);
+    # configurable so the bracket decision can be revisited without a rewrite.
+    recommendation_min_badge: int = 90
 
     @property
     def data_dir(self) -> Path:
@@ -72,4 +75,5 @@ class Settings:
             steam_api_base_url=os.environ.get("STEAM_API_BASE_URL", "https://api.steampowered.com"),
             steam_api_key=os.environ.get("STEAM_API_KEY"),
             deadlock_app_id=int(os.environ.get("DEADLOCK_APP_ID", "1422450")),
+            recommendation_min_badge=int(os.environ.get("DEADLOCK_RECOMMENDATION_MIN_BADGE", "90")),
         )

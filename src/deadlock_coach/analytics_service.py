@@ -7,7 +7,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
-from deadlock_coach.asset_service import hero_label, item_label, resolve_hero_id
+from deadlock_coach.asset_service import RankBadgeRange, hero_label, item_label, resolve_hero_id
 from deadlock_coach.api import DeadlockApiClient
 from deadlock_coach.config import Settings
 from deadlock_coach.storage import (
@@ -36,6 +36,22 @@ SUPPORTED_ANALYTICS_ENDPOINTS = {
     "scoreboards/heroes": "/v1/analytics/scoreboards/heroes",
     "scoreboards/players": "/v1/analytics/scoreboards/players",
 }
+
+
+def rank_scoped_min_matches(min_matches: int, rank_filter: RankBadgeRange | None) -> int:
+    """Scale a global min-matches floor down when stats are rank-scoped.
+
+    A single badge band has roughly one tenth of the global sample, and a
+    single subtier a tenth of that again; keeping the global floor would
+    filter out every hero or item.
+    """
+
+    effective_min_matches = max(1, min_matches)
+    if rank_filter is None or effective_min_matches < 100000:
+        return effective_min_matches
+    if rank_filter.min_badge == rank_filter.max_badge:
+        return 1000
+    return 10000
 
 
 def resolve_analytics_endpoint(name_or_path: str) -> str:
@@ -152,7 +168,7 @@ def read_latest_global_hero_stats(
 
     return {
         "source": "local_sqlite",
-        "time_window": _window_label(snapshot),
+        "time_window": window_label(snapshot),
         "sample_scope": "global_public_matches",
         "snapshot_id": snapshot["snapshot_id"],
         "fetched_at": snapshot["fetched_at"],
@@ -227,7 +243,7 @@ def read_latest_global_item_stats(
 
     return {
         "source": "local_sqlite",
-        "time_window": _window_label(snapshot),
+        "time_window": window_label(snapshot),
         "sample_scope": "global_public_matches",
         "snapshot_id": snapshot["snapshot_id"],
         "fetched_at": snapshot["fetched_at"],
@@ -361,7 +377,7 @@ def read_latest_item_flow_summary(
 
     return {
         "source": "local_sqlite",
-        "time_window": _window_label(snapshot),
+        "time_window": window_label(snapshot),
         "sample_scope": "global_public_matches",
         "snapshot_id": snapshot["snapshot_id"],
         "fetched_at": snapshot["fetched_at"],
@@ -441,7 +457,7 @@ def read_latest_player_performance_curve(
 
     return {
         "source": "local_sqlite",
-        "time_window": _window_label(snapshot),
+        "time_window": window_label(snapshot),
         "sample_scope": "player_specific_curve",
         "snapshot_id": snapshot["snapshot_id"],
         "fetched_at": snapshot["fetched_at"],
@@ -529,7 +545,13 @@ def _latest_snapshot(settings: Settings, endpoint: str, required_params: dict[st
     return None
 
 
-def _window_label(snapshot: dict[str, Any]) -> str:
+def window_label(snapshot: dict[str, Any]) -> str:
+    """Patch-window attribution for a stored statistic.
+
+    Prefers an app-owned patch window label, then the coverage range the query
+    was scoped to, then the API's default window.
+    """
+
     if snapshot.get("patch_window_label"):
         return str(snapshot["patch_window_label"])
     start = snapshot.get("coverage_start")

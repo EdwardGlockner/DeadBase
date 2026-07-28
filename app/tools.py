@@ -14,17 +14,19 @@ from urllib.request import Request, urlopen
 
 from deadlock_coach.api import DeadlockApiClient
 from deadlock_coach.analytics_service import (
+    rank_scoped_min_matches,
     read_latest_global_hero_stats,
     read_latest_global_item_stats,
     read_latest_item_flow_summary,
     read_latest_player_performance_curve,
 )
-from deadlock_coach.asset_service import hero_label, item_asset, item_label, resolve_rank_badge_range
+from deadlock_coach.asset_service import hero_label, item_asset, item_label, resolve_hero_id, resolve_rank_badge_range
 from deadlock_coach.agent_orchestration import build_response_envelope
 from deadlock_coach.coach_service import DEFAULT_WINDOW_MATCHES, account_summary_payload, list_tracked_accounts, summarize_account
 from deadlock_coach.config import Settings
 from deadlock_coach.knowledge_base import query_local_knowledge_tables, retrieve_grounded_knowledge_context, search_local_knowledge
 from deadlock_coach.runtime_context import ActiveCoachContext, get_active_coach_context
+from deadlock_coach.signature_service import read_latest_hero_signature
 from deadlock_coach.storage import _connect
 
 
@@ -764,15 +766,6 @@ def _format_reference_date(value: str | None) -> str | None:
     return f"{moment.strftime('%B')} {moment.day}, {moment.year}"
 
 
-def _rank_scoped_min_matches(min_matches: int, rank_filter: Any | None) -> int:
-    effective_min_matches = max(1, min_matches)
-    if rank_filter is None or effective_min_matches < 100000:
-        return effective_min_matches
-    if rank_filter.min_badge == rank_filter.max_badge:
-        return 1000
-    return 10000
-
-
 def _clean_reference_excerpt(text: str | None, *, max_chars: int = 280) -> str:
     cleaned = re.sub(r"\s+", " ", str(text or "")).strip()
     if not cleaned:
@@ -1340,7 +1333,7 @@ def get_global_hero_stats(limit: int = 5, min_matches: int = 100000, rank_name: 
     """
     settings = _settings()
     rank_filter = resolve_rank_badge_range(settings, rank_name) if rank_name else None
-    effective_min_matches = _rank_scoped_min_matches(min_matches, rank_filter)
+    effective_min_matches = rank_scoped_min_matches(min_matches, rank_filter)
     min_average_badge = rank_filter.min_badge if rank_filter is not None else None
     max_average_badge = rank_filter.max_badge if rank_filter is not None else None
     local_result = read_latest_global_hero_stats(
@@ -1379,7 +1372,7 @@ def get_global_item_stats(limit: int = 5, min_matches: int = 100000, rank_name: 
     """
     settings = _settings()
     rank_filter = resolve_rank_badge_range(settings, rank_name) if rank_name else None
-    effective_min_matches = _rank_scoped_min_matches(min_matches, rank_filter)
+    effective_min_matches = rank_scoped_min_matches(min_matches, rank_filter)
     min_average_badge = rank_filter.min_badge if rank_filter is not None else None
     max_average_badge = rank_filter.max_badge if rank_filter is not None else None
     local_result = read_latest_global_item_stats(
@@ -1898,6 +1891,54 @@ def get_item_reference(item_name: str) -> dict[str, Any]:
         "available": True,
         "page": page,
     }
+
+
+def get_hero_item_stats(hero_name: str, limit: int = 10) -> dict[str, Any]:
+    """Return a hero's signature: the items it buys far more often than average.
+
+    Items are ranked by pick-share lift over the global average — never by win
+    rate — sourced from the configured high-badge bracket. Every figure carries
+    its patch window, rank bracket, and sample size; repeat that attribution
+    when quoting a number. Requires a completed `sync hero-signature` run; if
+    no data is stored, say so instead of estimating a build from memory.
+    """
+
+    settings = _settings()
+    requested = str(hero_name or "").strip()
+    if not requested:
+        return {
+            "source": "local_warehouse",
+            "kind": "hero_signature",
+            "available": False,
+            "error": "Hero name is required.",
+        }
+
+    hero_id = resolve_hero_id(settings, requested)
+    if hero_id is None:
+        return {
+            "source": "local_warehouse",
+            "kind": "hero_signature",
+            "available": False,
+            "status": "unknown_hero",
+            "requested_hero": requested,
+        }
+
+    result = read_latest_hero_signature(settings, hero_id, limit=max(1, min(limit, 20)))
+    if result is None:
+        return {
+            "source": "local_warehouse",
+            "kind": "hero_signature",
+            "available": False,
+            "status": "no_data",
+            "requested_hero": requested,
+            "note": "No hero signature has been synced yet. Run `deadlock-coach sync hero-signature` first.",
+        }
+
+    result["hero_label"] = hero_label(settings, hero_id)
+    if result.get("available"):
+        for row in result["signature"]:
+            row["item_label"] = item_label(settings, row["item_id"])
+    return result
 
 
 def get_recent_matches(

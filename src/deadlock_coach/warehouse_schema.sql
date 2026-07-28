@@ -262,6 +262,35 @@ CREATE TABLE IF NOT EXISTS player_performance_curve_point (
 CREATE INDEX IF NOT EXISTS idx_player_performance_curve_snapshot
     ON player_performance_curve_point(snapshot_id, game_time ASC);
 
+CREATE TABLE IF NOT EXISTS hero_signature_run (
+    run_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fetched_at TEXT NOT NULL,
+    patch_window_label TEXT,
+    coverage_start INTEGER,
+    coverage_end INTEGER,
+    min_average_badge INTEGER,
+    max_average_badge INTEGER,
+    baseline_snapshot_id INTEGER NOT NULL REFERENCES source_snapshot(id),
+    hero_stats_snapshot_id INTEGER NOT NULL REFERENCES source_snapshot(id),
+    baseline_matches INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS hero_signature_item (
+    run_id INTEGER NOT NULL REFERENCES hero_signature_run(run_id) ON DELETE CASCADE,
+    hero_id INTEGER NOT NULL,
+    item_id INTEGER NOT NULL,
+    snapshot_id INTEGER NOT NULL REFERENCES source_snapshot(id),
+    hero_matches INTEGER NOT NULL,
+    item_matches INTEGER NOT NULL,
+    hero_pick_share REAL NOT NULL,
+    global_pick_share REAL NOT NULL,
+    pick_share_lift REAL NOT NULL,
+    PRIMARY KEY (run_id, hero_id, item_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_hero_signature_item_lookup
+    ON hero_signature_item(run_id, hero_id, pick_share_lift DESC);
+
 CREATE TABLE IF NOT EXISTS artifact_run (
     artifact_id TEXT PRIMARY KEY,
     artifact_type TEXT NOT NULL,

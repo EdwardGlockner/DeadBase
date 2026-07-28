@@ -10,6 +10,7 @@ from deadlock_coach.analytics_service import parse_cli_param, sync_analytics_que
 from deadlock_coach.config import Settings
 from deadlock_coach.data_surface import inspect_data_surface, list_artifacts
 from deadlock_coach.knowledge_base import sync_reference_corpus, sync_wiki_reference_files
+from deadlock_coach.signature_service import sync_hero_signature
 from deadlock_coach.server import serve
 from deadlock_coach.steam_news_service import sync_steam_patches
 from deadlock_coach.storage import (
@@ -76,6 +77,23 @@ def build_parser() -> argparse.ArgumentParser:
         default=0,
         help="Number of recent matches to hydrate with /matches/{match_id}/metadata",
     )
+
+    hero_signature_parser = sync_subparsers.add_parser(
+        "hero-signature",
+        help="Sync every playable hero's signature: one item-stats request per hero plus a global baseline",
+    )
+    hero_signature_parser.add_argument(
+        "--patch-window-label",
+        default=None,
+        help="Optional app-owned patch window label to store with the run",
+    )
+    hero_signature_parser.add_argument(
+        "--param",
+        action="append",
+        default=[],
+        help="Extra analytics query param in key=value form, e.g. min_unix_timestamp=1750000000",
+    )
+    hero_signature_parser.add_argument("--json", action="store_true", help="Emit JSON instead of prose")
 
     analytics_parser = sync_subparsers.add_parser("analytics", help="Fetch and store a raw analytics snapshot")
     analytics_parser.add_argument(
@@ -243,6 +261,29 @@ def command_sync_player(settings: Settings, account_id: int, hydrate_matches: in
     return 0
 
 
+def command_sync_hero_signature(
+    settings: Settings,
+    raw_params: list[str],
+    patch_window_label: str | None,
+    as_json: bool,
+) -> int:
+    query_params = dict(parse_cli_param(raw) for raw in raw_params)
+    result = sync_hero_signature(settings, patch_window_label=patch_window_label, query_params=query_params)
+    if as_json:
+        _print_json(result)
+        return 0
+
+    bracket = f"badge {result['min_average_badge']}+" if result["max_average_badge"] is None else (
+        f"badge {result['min_average_badge']}-{result['max_average_badge']}"
+    )
+    print(
+        f"Stored {result['signature_rows']} signature rows for {result['heroes_synced']} playable heroes "
+        f"({bracket}, {result['baseline_matches']} baseline matches)"
+    )
+    print(f"Run: {result['run_id']}")
+    return 0
+
+
 def command_sync_analytics(
     settings: Settings,
     endpoint: str,
@@ -350,6 +391,8 @@ def main(argv: list[str] | None = None) -> int:
             return command_sync_leaderboard(settings, args.region)
         if args.sync_command == "player":
             return command_sync_player(settings, args.account_id, args.hydrate_matches)
+        if args.sync_command == "hero-signature":
+            return command_sync_hero_signature(settings, args.param, args.patch_window_label, args.json)
         if args.sync_command == "analytics":
             return command_sync_analytics(settings, args.endpoint, args.param, args.patch_window_label, args.json)
 
