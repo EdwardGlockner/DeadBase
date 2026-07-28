@@ -9,6 +9,7 @@ from deadlock_coach.account_service import sync_account
 from deadlock_coach.analytics_service import parse_cli_param, sync_analytics_query
 from deadlock_coach.config import Settings
 from deadlock_coach.data_surface import inspect_data_surface, list_artifacts
+from deadlock_coach.hydration_service import DEFAULT_BATCH_SIZE, backfill_match_metadata
 from deadlock_coach.knowledge_base import sync_reference_corpus, sync_wiki_reference_files
 from deadlock_coach.server import serve
 from deadlock_coach.steam_news_service import sync_steam_patches
@@ -76,6 +77,24 @@ def build_parser() -> argparse.ArgumentParser:
         default=0,
         help="Number of recent matches to hydrate with /matches/{match_id}/metadata",
     )
+
+    backfill_parser = sync_subparsers.add_parser(
+        "backfill-matches",
+        help="Hydrate stored match history in bulk; resumable and skips already-hydrated matches",
+    )
+    backfill_parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=DEFAULT_BATCH_SIZE,
+        help="How many match ids to request per bulk metadata call",
+    )
+    backfill_parser.add_argument(
+        "--max-requests",
+        type=int,
+        default=None,
+        help="Stop after this many upstream requests; re-run to continue",
+    )
+    backfill_parser.add_argument("--json", action="store_true", help="Emit JSON instead of prose")
 
     analytics_parser = sync_subparsers.add_parser("analytics", help="Fetch and store a raw analytics snapshot")
     analytics_parser.add_argument(
@@ -243,6 +262,30 @@ def command_sync_player(settings: Settings, account_id: int, hydrate_matches: in
     return 0
 
 
+def command_sync_backfill_matches(
+    settings: Settings,
+    batch_size: int,
+    max_requests: int | None,
+    as_json: bool,
+) -> int:
+    result = backfill_match_metadata(settings, batch_size=batch_size, max_requests=max_requests)
+    if as_json:
+        _print_json(result)
+        return 0 if result["error"] is None else 1
+
+    print(
+        f"Hydrated {result['hydrated']} of {result['pending_before']} pending matches "
+        f"in {result['requests_made']} bulk requests; {result['remaining']} remain"
+    )
+    if result["unresolved_match_ids"]:
+        print(f"Not returned by upstream: {result['unresolved_match_ids']}")
+    if result["error"] is not None:
+        print(f"Stopped early: {result['error']}")
+        print("Re-run `deadlock-coach sync backfill-matches` to continue.")
+        return 1
+    return 0
+
+
 def command_sync_analytics(
     settings: Settings,
     endpoint: str,
@@ -350,6 +393,8 @@ def main(argv: list[str] | None = None) -> int:
             return command_sync_leaderboard(settings, args.region)
         if args.sync_command == "player":
             return command_sync_player(settings, args.account_id, args.hydrate_matches)
+        if args.sync_command == "backfill-matches":
+            return command_sync_backfill_matches(settings, args.batch_size, args.max_requests, args.json)
         if args.sync_command == "analytics":
             return command_sync_analytics(settings, args.endpoint, args.param, args.patch_window_label, args.json)
 
