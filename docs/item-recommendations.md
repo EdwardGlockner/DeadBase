@@ -114,6 +114,30 @@ Headshot is not a counter to Abrams, and hand the bracket's blind spot back as a
 Sample size is not a reason to prefer either band — the lower bracket has *more* data,
 not less.
 
+## Post-match review
+
+The recommendation layers describe what strong players do. Post-match review is the
+only part that says whether *this* player does it, which makes it the one place a
+recommendation can be checked against reality rather than assumed useful.
+
+Form: compare the player's own purchases against the high-badge baseline for the
+matchups they actually faced. *"You bought Toxic Bullets in 3 of 8 lanes against a
+sustain hero; high-badge Hazes buy it in 11% of those lanes."* This is a join between
+local `item_purchase` and the baselines the signature sync already produces — no new
+upstream data.
+
+`item_purchase` holds purchases for **all** players in a hydrated match, not just the
+account being coached (195 distinct accounts across 20 matches). Enemy builds in the
+player's own history are therefore available, enabling the personal form of a mined
+reaction: *"they bought Knockdown in 6 of your last 20 games and you never answered
+it."*
+
+**Prerequisite: hydration coverage.** Match history currently runs well ahead of
+hydration — 246 rows in `player_match` against 20 in `match_metadata`. Review quality
+is bounded by the hydrated count, not the history count. `/v1/matches/metadata` accepts
+bulk `match_ids` at 10 req/min, so backfilling the full history is a handful of
+requests rather than one per match.
+
 ## Confounds already found
 
 Three separate metrics have looked like signal and were not. Any new metric should be
