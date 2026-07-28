@@ -94,6 +94,33 @@ hero assets on a 7-day TTL, but patches have shipped a day apart (06-30, 07-01).
 properties must be invalidated when a new `patch_event` appears, otherwise the
 mechanical layer — the half users will trust most — can be a week stale.
 
+## Tool surface
+
+The coach gets **primitives it composes per situation**, not answer-shaped tools:
+
+| tool | returns |
+| --- | --- |
+| `get_hero_mechanics(hero)` | abilities with their properties — channel times, radii, heal factors |
+| `get_item_mechanics(item)` | what an item does, in numbers |
+| `find_items_by_effect(effect)` | items whose properties match an effect, e.g. "stun immunity" |
+| `get_hero_item_stats(hero, ...)` | signature, matchup lift, and the player's own history |
+
+A tool such as `get_counter_items(my_hero, enemy_hero)` was rejected. It expresses one
+of the six scenario classes above and has nowhere to put the others — "midboss in 90
+seconds" has no parameter to land in — so the surface would grow a tool per scenario,
+each needing its own eval.
+
+A convenience tool alongside the primitives was also rejected. Returning a confident
+ranked answer makes it the cheapest call for the model, so it gets used for situations
+it does not fit, silently discarding the situational context that made the question
+worth asking. Every answer should be composed.
+
+**Consequence:** answer quality moves from the data layer into
+`app/instructions/coach_agent.md`. A wrong recommendation becomes a prompt problem
+rather than a query problem, which is harder to isolate. Eval cases under `tests/eval`
+need to cover several scenario classes, not only the lane matchup, or this shift goes
+unmeasured.
+
 ## Where mechanics live
 
 Mechanics are normalized into the warehouse rather than read from the per-item disk
