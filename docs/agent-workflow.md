@@ -113,6 +113,34 @@ gh issue list --state open --label "wayfinder:grilling" --label "wayfinder:task"
 
 A ticket with an assignee is claimed. GitHub renders open blockers on the issue itself.
 
+#### The exact order, one session each
+
+Eleven tickets are open. Blocking edges admit this order — each command is its own fresh session:
+
+```bash
+/wayfinder 11 #12    # What the coach owes: the answer catalog   <- start here
+/wayfinder 11 #25    # A retrieval eval set for coaching questions  (independent of #12; can run in parallel)
+/wayfinder 11 #16    # Where game knowledge lives and how it is stored
+/wayfinder 11 #19    # What grounded means operationally
+/wayfinder 11 #18    # How item recommendations are derived
+/wayfinder 11 #23    # The eval harness and golden datasets
+/wayfinder 11 #17    # How the agent finds the right knowledge
+/wayfinder 11 #20    # One agent or several
+/wayfinder 11 #21    # Is ADK plus Gemini the framework we keep
+/wayfinder 11 #22    # How agent instructions are authored and tested
+/wayfinder 11 #24    # Observability, tracing and monitoring
+```
+
+Only #12 and #25 are takeable right now; the rest unblock as their blockers close, in the order above.
+
+**Expect more than eleven.** Resolving a ticket can spawn new tickets and graduate fog from "Not yet specified" into real ones — player memory, the dashboards, the free-vs-paid boundary and the legal work are all still fog and will become tickets on this map. Do not treat the list above as the full count. The map is finished when this returns nothing:
+
+```bash
+gh issue list --state open --json number --jq 'length'   # scoped to #11's sub-issues
+```
+
+Or just run `/wayfinder 11` with no ticket and let it pick — it takes the first unclaimed, unblocked ticket every time, which reproduces the order above without you tracking it.
+
 ### Step 2 — synthesize the spec, once
 
 Only when no tickets remain.
