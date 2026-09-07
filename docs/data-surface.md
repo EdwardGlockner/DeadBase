@@ -157,7 +157,5 @@ per-request one:
 `api.py:31`, but is absent from `.env.example`. Obtaining one is a 30× throughput
 change on `/v1/sql` for no code change.
 
-Two entries above are also now stale: item analytics *is* normalized (see
-`item_analytics_stat`, `item_flow_*` in `warehouse_schema.sql`), and asset ingestion for
-mechanics grounding is designed in
-[`item-recommendations.md`](item-recommendations.md).
+One entry above is also now stale: item analytics *is* normalized (see
+`item_analytics_stat`, `item_flow_*` in `warehouse_schema.sql`).
