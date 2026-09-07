@@ -11,7 +11,7 @@ prompt**. The agent cannot launch these on its own.
 | --- | --- | --- | --- |
 | 0 | `/setup-matt-pocock-skills` | once, ever | Configures the issue tracker, triage labels, and domain-doc layout. Writes `docs/agents/*.md` and an "Agent skills" block in `AGENTS.md`. |
 | 1 | `/wayfinder` | one | Charts the map. Names the destination, grills breadth-first, creates decision tickets, fires research subagents, then stops. |
-| 2 | `/wayfinder <map url>` | **one per decision ticket** | Resolves one ticket: claim, answer, close, record on the map. Repeat until no tickets remain. |
+| 2 | `/wayfinder <map>` | **one per decision ticket** | Resolves one ticket: claim, answer, close, record on the map. Repeat until no tickets remain. |
 | 3 | `/to-spec` | one | Synthesizes the decisions into a spec (PRD) issue, labelled `ready-for-agent`. |
 | 4 | `/to-tickets` | one | Breaks the spec into tracer-bullet build tickets with blocking edges. |
 | 5 | `/implement` | one per build ticket | Builds a ticket. Drives `/tdd` at agreed seams. |
@@ -19,6 +19,21 @@ prompt**. The agent cannot launch these on its own.
 
 The repetition happens at **step 2** and **step 5**, not at step 4. `/to-tickets` runs a
 single time.
+
+## The map
+
+Step 1 creates a single issue labelled `wayfinder:map`. That issue *is* the map, and its
+URL is what you pass to every later session. It does not exist until step 1 has run.
+
+    /wayfinder 11
+    /wayfinder https://github.com/EdwardGlockner/DeadBase/issues/11
+
+Either form works. The decision tickets are child issues of the map; the map body stays a
+low-resolution index that links to them rather than restating them.
+
+The GitHub labels (`wayfinder:map`, `wayfinder:research`, `wayfinder:prototype`,
+`wayfinder:grilling`, `wayfinder:task`, plus the five triage labels) already exist on this
+repo and survive any local cleanup, since labels live server-side.
 
 ## Wayfinder vs to-tickets
 
