@@ -80,6 +80,94 @@ not need a map.
 `/triage`, `/codebase-design`, `/resolving-merge-conflicts`. Wayfinder invokes several of these
 itself while resolving tickets.
 
+## Continuing the Deadbase map (#11)
+
+The map is charted. This is the exact sequence from here.
+
+**Map:** https://github.com/EdwardGlockner/DeadBase/issues/11
+
+### Step 1 — resolve the decision tickets, one per session
+
+Repeat until the map has no open tickets. **One ticket per session**; the ticket is sized for it.
+
+```bash
+# a fresh session each time, then:
+/wayfinder 11
+```
+
+That loads the map, takes the first ticket on the frontier, assigns it to you, resolves it, closes it, and records it on the map. To choose a specific ticket instead of the frontier's first:
+
+```bash
+/wayfinder 11 #19
+```
+
+Unblocked tickets may run **in parallel** in separate sessions — claiming assigns the ticket, so a concurrent session skips it.
+
+Start with **#12 (the answer catalog)**. Six tickets block on it, and it is the only one whose resolution unblocks a whole layer. **#25** is independent of it and can run at the same time.
+
+Check what is takeable without opening the map:
+
+```bash
+gh issue list --state open --label "wayfinder:grilling" --label "wayfinder:task" --json number,title,assignees
+```
+
+A ticket with an assignee is claimed. GitHub renders open blockers on the issue itself.
+
+### Step 2 — synthesize the spec, once
+
+Only when no tickets remain.
+
+**`/to-spec` reads the current conversation, not the tracker.** After a multi-session map run every decision lives in a resolution comment on a closed issue, and a fresh session knows none of it. Load the map first, in the same session:
+
+```bash
+gh issue view 11
+gh issue list --state closed --json number,title,comments --jq '.[] | {number, title, comments: [.comments[].body]}'
+```
+
+Then, in that same session:
+
+```bash
+/to-spec
+```
+
+Produces a PRD issue labelled `ready-for-agent`.
+
+### Step 3 — break the spec into build tickets, once
+
+```bash
+/to-tickets
+```
+
+Runs a **single** time. Produces vertical build slices with blocking edges — work, not decisions.
+
+### Step 4 — build, one ticket per session
+
+```bash
+/implement <ticket-number>
+```
+
+Repeat per build ticket. It drives `/tdd` at agreed seams.
+
+### Step 5 — review
+
+```bash
+/code-review
+```
+
+### Research findings
+
+Three research tickets were resolved during charting. Their findings are on branches, not on main:
+
+```bash
+git show research/deadlock-data-sources:docs/research/deadlock-data-sources.md
+git show research/retrieval-approaches:docs/research/retrieval-approaches.md
+git show research/player-data-audit:docs/research/player-data-audit.md
+```
+
+### Outside the map
+
+The player-data audit found 24 defects, 21 observed — starting with `won` never being populated, so 100% of match history is stored unresolved and the coach reports fabricated loss streaks. That is a bug, not a decision, and it does not need the map. Fixing it early makes every downstream decision easier to evaluate, because the telemetry stops lying.
+
 ## References
 
 - [mattpocock/skills](https://github.com/mattpocock/skills)
