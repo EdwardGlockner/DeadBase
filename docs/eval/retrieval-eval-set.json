@@ -1,0 +1,669 @@
+{
+  "schema_version": 1,
+  "generated_against": {
+    "client_version": 6689,
+    "version_datetime": "2026-09-11T11:44:27",
+    "latest_patch": "2026-08-22"
+  },
+  "classes": {
+    "record_form": "Your record & form",
+    "builds_timings": "Your builds & timings",
+    "meta_lookup": "Meta lookup",
+    "matchups_counters": "Matchups & counters",
+    "teaching": "Teaching",
+    "patch_impact": "Patch impact",
+    "data_support": "Data & account support"
+  },
+  "questions": [
+    {
+      "id": "record-01",
+      "class": "record_form",
+      "question": "how have I been doing on Billy lately?",
+      "must": [
+        "hero:72",
+        "player:match_history?hero_id=72&window=20"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Window is a property of the answer (#12 rule 2): N must be stated. Outcome comes from match_result == player_team, never from a metadata join."
+    },
+    {
+      "id": "record-02",
+      "class": "record_form",
+      "question": "what's my win rate with Haze?",
+      "must": [
+        "hero:13",
+        "player:match_history?hero_id=13&window=20"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Descriptive claim. Unresolved matches are excluded from the denominator, never counted as losses (#14 defect 1)."
+    },
+    {
+      "id": "record-03",
+      "class": "record_form",
+      "question": "am I on a losing streak right now?",
+      "must": [
+        "player:match_history?window=20"
+      ],
+      "may": [
+        "hero:*"
+      ],
+      "prose_gap": false,
+      "note": "The exact shape #14 found fabricated: 8 reported losses where 6 were wins. Retrieval must return resolved outcomes only."
+    },
+    {
+      "id": "record-04",
+      "class": "record_form",
+      "question": "which hero am I actually best on?",
+      "must": [
+        "player:match_history?window=career&group_by=hero_id"
+      ],
+      "may": [
+        "analytics:hero-stats"
+      ],
+      "prose_gap": false,
+      "note": "Comparative if it names a baseline: floor is >=10 resolved matches per hero (#12 rule 3). Heroes under the floor are reported descriptively or not at all."
+    },
+    {
+      "id": "record-05",
+      "class": "record_form",
+      "question": "am I better than average on Lash?",
+      "must": [
+        "hero:31",
+        "player:match_history?hero_id=31&window=20",
+        "analytics:hero-stats?hero_id=31"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Comparative: needs both the player rows and the global baseline in one retrieval. Two sources, one answer."
+    },
+    {
+      "id": "record-06",
+      "class": "record_form",
+      "question": "how many games have I played this week?",
+      "must": [
+        "player:match_history?window=7d"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Time-windowed rather than count-windowed. Tests that the window is a query parameter, not a constant."
+    },
+    {
+      "id": "record-07",
+      "class": "record_form",
+      "question": "is my KDA on Seven any good?",
+      "must": [
+        "hero:2",
+        "player:match_history?hero_id=2&window=20",
+        "analytics:player-stats/metrics?hero_id=2"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "The metrics endpoint gives percentiles, so 'good' is answerable as a rank rather than an opinion. Quantiles are DDSketch approximations (max relative error 0.01) and should not be quoted to more precision than that."
+    },
+    {
+      "id": "record-08",
+      "class": "record_form",
+      "question": "do I play worse the longer I sit in a session?",
+      "must": [
+        "player:match_history?window=career&order_by=start_time"
+      ],
+      "may": [],
+      "prose_gap": true,
+      "note": "No upstream evidence source for session grouping; the rows carry start_time and nothing else. Causal claim, so #12 rule 3 needs a mechanism the store does not have -- correct behaviour is to describe the pattern and refuse the cause."
+    },
+    {
+      "id": "build-01",
+      "class": "builds_timings",
+      "question": "what do I usually buy first on Billy?",
+      "must": [
+        "hero:72",
+        "player:item_purchase?hero_id=72&window=20&type=upgrade"
+      ],
+      "may": [
+        "item:*"
+      ],
+      "prose_gap": false,
+      "note": "Ability points must be excluded: #14 measured 47% of stored item_purchase rows as abilities, crowding real items out of a LIMIT 30. 'usually' is a computed band (#12 rule 4) with hero+window as denominator."
+    },
+    {
+      "id": "build-02",
+      "class": "builds_timings",
+      "question": "when do I get my first tier 3 item on Haze?",
+      "must": [
+        "hero:13",
+        "player:item_purchase?hero_id=13&window=20&type=upgrade"
+      ],
+      "may": [
+        "item:*"
+      ],
+      "prose_gap": false,
+      "note": "Needs the item projection's item_tier to classify a purchase, so a row lookup joins a projection lookup."
+    },
+    {
+      "id": "build-03",
+      "class": "builds_timings",
+      "question": "do I build metal skin enough?",
+      "must": [
+        "item:1378931225",
+        "player:item_purchase?item_id=1378931225&window=20"
+      ],
+      "may": [
+        "analytics:item-stats?item_id=1378931225"
+      ],
+      "prose_gap": false,
+      "note": "Lowercase entity, no article. 'enough' is comparative and needs the global baseline, not just the player's count."
+    },
+    {
+      "id": "build-04",
+      "class": "builds_timings",
+      "question": "how does my Infernus build compare to what most people run?",
+      "must": [
+        "hero:1",
+        "player:item_purchase?hero_id=1&window=20&type=upgrade",
+        "analytics:item-flow-stats?hero_id=1"
+      ],
+      "may": [
+        "item:*"
+      ],
+      "prose_gap": false,
+      "note": "item-flow-stats carries adjusted_win_rate, already standardised for net worth at buy -- the raw win rate is wealth-confounded and should not be the number cited."
+    },
+    {
+      "id": "build-05",
+      "class": "builds_timings",
+      "question": "am I buying Extra Regen too often?",
+      "must": [
+        "item:2829638276",
+        "player:item_purchase?item_id=2829638276&window=20"
+      ],
+      "may": [
+        "analytics:item-stats?item_id=2829638276"
+      ],
+      "prose_gap": false,
+      "note": "The exact denominator case from #12 rule 4: 20 buys across 1000 career games is 2%, across 25 games in scope it is 80%. Scope is hero+window, never career."
+    },
+    {
+      "id": "build-06",
+      "class": "builds_timings",
+      "question": "what ability order do I take on Grey Talon?",
+      "must": [
+        "hero:17",
+        "player:item_purchase?hero_id=17&window=20&type=ability",
+        "analytics:ability-order-stats?hero_id=17"
+      ],
+      "may": [
+        "ability:548943648",
+        "ability:3452399392",
+        "ability:512733154",
+        "ability:3242902780"
+      ],
+      "prose_gap": false,
+      "note": "The one question where the ability rows in item_purchase are the wanted half rather than the noise -- the inverse of build-01, same table."
+    },
+    {
+      "id": "build-07",
+      "class": "builds_timings",
+      "question": "my souls feel low on Pocket, what are my last hits like?",
+      "must": [
+        "hero:50",
+        "player:match_history?hero_id=50&window=20",
+        "analytics:player-stats/metrics?hero_id=50"
+      ],
+      "may": [
+        "prose:soul-economy"
+      ],
+      "prose_gap": true,
+      "note": "Rows answer 'what are my last hits'; explaining why that depresses souls needs a note that does not exist yet. Correct behaviour is the numbers plus a named gap, not an invented mechanism."
+    },
+    {
+      "id": "meta-01",
+      "class": "meta_lookup",
+      "question": "who's the strongest hero right now?",
+      "must": [
+        "analytics:hero-stats"
+      ],
+      "may": [
+        "hero:*"
+      ],
+      "prose_gap": false,
+      "note": "Subject is the meta, not the player (#12 rule 1): the generic core is global stats regardless of who asks, and a personal tail must not displace it."
+    },
+    {
+      "id": "meta-02",
+      "class": "meta_lookup",
+      "question": "how much does Metal Skin cost?",
+      "must": [
+        "item:1378931225"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Pure projection lookup: one row, no analytics, no prose. If any prose is retrieved here, #16's no-numbers-in-prose rule has been violated somewhere."
+    },
+    {
+      "id": "meta-03",
+      "class": "meta_lookup",
+      "question": "what's the win rate on Ricochet?",
+      "must": [
+        "item:2480592370",
+        "analytics:item-stats?item_id=2480592370"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "item-stats caches 6 hours server-side, unlike the 1-hour analytics endpoints; the answer's freshness stamp comes from our stored client_version, not from the fetch time."
+    },
+    {
+      "id": "meta-04",
+      "class": "meta_lookup",
+      "question": "which tier 5 items are actually worth buying?",
+      "must": [
+        "analytics:item-stats",
+        "item:*?item_tier=5"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Fan-out: the projection filters 173 shopable items down to the 17 tier-5 rows, then analytics ranks them. Tests whether a filter predicate survives entity resolution."
+    },
+    {
+      "id": "meta-05",
+      "class": "meta_lookup",
+      "question": "is Billy any good in high ranks?",
+      "must": [
+        "hero:72",
+        "analytics:hero-stats?hero_id=72&min_badge_level=91"
+      ],
+      "may": [
+        "analytics:badge-distribution"
+      ],
+      "prose_gap": false,
+      "note": "Rank-scoped meta. badge-distribution has a semantic trap: unique_players ignores the match_mode filter entirely and always reads ranked matches."
+    },
+    {
+      "id": "meta-06",
+      "class": "meta_lookup",
+      "question": "what's Haze's pick rate?",
+      "must": [
+        "hero:13",
+        "analytics:hero-stats?hero_id=13"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Pick rate is derived (matches / total matches), not a field. The retrieval target is the row; the arithmetic is the answer layer's."
+    },
+    {
+      "id": "meta-07",
+      "class": "meta_lookup",
+      "question": "which heroes get banned the most?",
+      "must": [
+        "analytics:hero-ban-stats"
+      ],
+      "may": [
+        "hero:*"
+      ],
+      "prose_gap": false,
+      "note": "hero-ban-stats silently excludes matches where ban extraction failed -- an unquantified selection effect that the answer must carry as a caveat."
+    },
+    {
+      "id": "meta-08",
+      "class": "meta_lookup",
+      "question": "what does Warden's Binding Word do?",
+      "must": [
+        "hero:25",
+        "ability:1656913918"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Assets answer this completely. Deliberate contrast with teach-07: a named entity needs no note."
+    },
+    {
+      "id": "counter-01",
+      "class": "matchups_counters",
+      "question": "who counters infernus? i keep dying to him",
+      "must": [
+        "hero:1",
+        "analytics:hero-counter-stats?enemy_hero_id=1"
+      ],
+      "may": [
+        "hero:*"
+      ],
+      "prose_gap": false,
+      "note": "Lowercase, conversational padding. The direction matters: enemy_hero_id=1, not hero_id=1 -- reversing it answers the opposite question with a plausible-looking number."
+    },
+    {
+      "id": "counter-02",
+      "class": "matchups_counters",
+      "question": "is Seven good into Infernus?",
+      "must": [
+        "hero:2",
+        "hero:1",
+        "analytics:hero-counter-stats?hero_id=2&enemy_hero_id=1"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Both directions named in one question. A single counter row answers it; two rows would double-count."
+    },
+    {
+      "id": "counter-03",
+      "class": "matchups_counters",
+      "question": "who should I lane with as Mo and Krill?",
+      "must": [
+        "hero:18",
+        "analytics:hero-synergy-stats?hero_id=18"
+      ],
+      "may": [
+        "hero:*"
+      ],
+      "prose_gap": false,
+      "note": "Entity resolution: 'Mo and Krill' must resolve to 'Mo & Krill' (hero 18). synergy rows are keyed hero_id1/hero_id2, so the hero can appear on either side."
+    },
+    {
+      "id": "counter-04",
+      "class": "matchups_counters",
+      "question": "what's a good lane duo against Bebop and Haze?",
+      "must": [
+        "hero:15",
+        "hero:13",
+        "analytics:lane-matchup-stats"
+      ],
+      "may": [
+        "analytics:hero-synergy-stats"
+      ],
+      "prose_gap": false,
+      "note": "lane-matchup-stats carries an explicit upstream 'subject to change without notice' warning and must not be the only path; synergy stats are the fallback."
+    },
+    {
+      "id": "counter-05",
+      "class": "matchups_counters",
+      "question": "how do I beat Vindicta in lane as Abrams?",
+      "must": [
+        "hero:3",
+        "hero:6",
+        "analytics:lane-matchup-stats"
+      ],
+      "may": [
+        "prose:lane-phase"
+      ],
+      "prose_gap": true,
+      "note": "Prescriptive, so #12 rule 3 demands a mechanism on top of the comparative evidence. The rows say who wins; nothing in the store says why. Correct behaviour names the gap."
+    },
+    {
+      "id": "counter-06",
+      "class": "matchups_counters",
+      "question": "grey talon vs haze who wins",
+      "must": [
+        "hero:17",
+        "hero:13",
+        "analytics:hero-counter-stats?hero_id=17&enemy_hero_id=13"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "No capitals, no punctuation, no question mark. Two multi-word hero names to segment out of six tokens."
+    },
+    {
+      "id": "counter-07",
+      "class": "matchups_counters",
+      "question": "is Metal Skin good against Haze?",
+      "must": [
+        "item:1378931225",
+        "hero:13",
+        "analytics:hero-counter-stats?enemy_hero_id=13"
+      ],
+      "may": [
+        "ability:731943444",
+        "prose:bullet-resist-vs-gun-heroes"
+      ],
+      "prose_gap": true,
+      "note": "The canonical #16 stitch: a note names Metal Skin and says why it answers gun-scaling heroes, the projection supplies the 3200 cost. The note does not exist yet, so this is a gap with usable rows behind it."
+    },
+    {
+      "id": "counter-08",
+      "class": "matchups_counters",
+      "question": "which heroes give Pocket the most trouble?",
+      "must": [
+        "hero:50",
+        "analytics:hero-counter-stats?hero_id=50"
+      ],
+      "may": [
+        "hero:*"
+      ],
+      "prose_gap": false,
+      "note": "Worst-N over the same rows counter-01 reads best-N from. Same retrieval, opposite sort."
+    },
+    {
+      "id": "teach-01",
+      "class": "teaching",
+      "question": "how does the soul economy work?",
+      "must": [
+        "prose:soul-economy"
+      ],
+      "may": [],
+      "prose_gap": true,
+      "note": "No numeric answer and no entity to key on. Exactly the shape #16 says earns a curated note; ships as a store miss until one is written."
+    },
+    {
+      "id": "teach-02",
+      "class": "teaching",
+      "question": "what's the difference between confirming and denying a soul?",
+      "must": [
+        "prose:soul-economy"
+      ],
+      "may": [],
+      "prose_gap": true,
+      "note": "Entity-less mechanic. Two named game concepts that exist in no asset family."
+    },
+    {
+      "id": "teach-03",
+      "class": "teaching",
+      "question": "when should I rotate out of lane?",
+      "must": [
+        "prose:lane-phase"
+      ],
+      "may": [],
+      "prose_gap": true,
+      "note": "Prescriptive and entity-less. The highest-value early note: counter-05 and several build questions all bottom out here."
+    },
+    {
+      "id": "teach-04",
+      "class": "teaching",
+      "question": "what do guardians actually do?",
+      "must": [
+        "prose:objectives"
+      ],
+      "may": [
+        "asset:npc-units"
+      ],
+      "prose_gap": true,
+      "note": "Partly row-backed -- npc-units holds guardian stats -- but the role of the objective in a match is prose. Tests a mixed hit where the rows alone read as an answer and are not one."
+    },
+    {
+      "id": "teach-05",
+      "class": "teaching",
+      "question": "how does spirit scaling work?",
+      "must": [
+        "prose:spirit-scaling"
+      ],
+      "may": [
+        "asset:heroes@scaling_stats"
+      ],
+      "prose_gap": true,
+      "note": "The hero asset holds scaling_stats per hero; what scaling means as a system holds for every hero and lives in none of them."
+    },
+    {
+      "id": "teach-06",
+      "class": "teaching",
+      "question": "is jungling even worth it?",
+      "must": [
+        "prose:jungle-farming"
+      ],
+      "may": [],
+      "prose_gap": true,
+      "note": "Entity-less and evaluative. No analytics endpoint measures jungle income."
+    },
+    {
+      "id": "teach-07",
+      "class": "teaching",
+      "question": "how does bullet resist actually reduce damage?",
+      "must": [
+        "prose:resistances"
+      ],
+      "may": [
+        "item:*?item_slot_type=vitality"
+      ],
+      "prose_gap": true,
+      "note": "The no-numbers rule under load: the note explains the curve in words, the projection supplies each item's number. Deliberate contrast with meta-08."
+    },
+    {
+      "id": "teach-08",
+      "class": "teaching",
+      "question": "what does Fixation do?",
+      "must": [
+        "hero:13",
+        "ability:1080948381"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "A named ability, fully answered from assets. Included so the set does not equate 'teaching' with 'prose gap'."
+    },
+    {
+      "id": "teach-09",
+      "class": "teaching",
+      "question": "why do people say Haze falls off late?",
+      "must": [
+        "hero:13",
+        "analytics:player-performance-curve?hero_id=13"
+      ],
+      "may": [
+        "prose:power-curves"
+      ],
+      "prose_gap": true,
+      "note": "Causal, so #12 rule 3 requires a mechanism on top. The curve endpoint shows the fall-off; nothing in the store says why, and the model's own Deadlock knowledge is explicitly banned from filling it."
+    },
+    {
+      "id": "patch-01",
+      "class": "patch_impact",
+      "question": "what changed in the last patch?",
+      "must": [
+        "patch:2026-08-22",
+        "asset:diff@6684..6689"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "The unified /v2/patches feed plus our own asset diff. The diff is the authoritative half: patch notes are prose written by Valve and routinely incomplete."
+    },
+    {
+      "id": "patch-02",
+      "class": "patch_impact",
+      "question": "did radiant regen get nerfed?",
+      "must": [
+        "item:2947183272",
+        "patch:2026-08-22",
+        "asset:items@6683",
+        "asset:items@6689"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Abbreviation: 'radiant regen' resolves to Radiant Regeneration. The 08-22 notes state heal on cast reduced 70 -> 65, and the two asset versions confirm it independently."
+    },
+    {
+      "id": "patch-03",
+      "class": "patch_impact",
+      "question": "is my Billy win rate still relevant after the patch?",
+      "must": [
+        "hero:72",
+        "player:match_history?hero_id=72&window=20",
+        "patch:2026-08-22"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "The straddle guard from #12 rule 2, made computable by #16: patch-stamp each match from start_time against the 806-version timeline and say how many of the 20 predate the boundary."
+    },
+    {
+      "id": "patch-04",
+      "class": "patch_impact",
+      "question": "what changed for Celeste recently?",
+      "must": [
+        "hero:81",
+        "ability:1950738949",
+        "patch:2026-08-22",
+        "asset:diff@6684..6689"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Hero-scoped diff. The 08-22 notes touch Dazzling Trick twice (cooldown 32s -> 34s, T2 barrier rescaled), so the entity filter has to reach abilities, not just the hero row."
+    },
+    {
+      "id": "patch-05",
+      "class": "patch_impact",
+      "question": "has Restorative Locket changed since I last played?",
+      "must": [
+        "item:2059712766",
+        "patch:2026-08-22",
+        "player:match_history?window=1"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Joins a patch question to a player row: 'since I last played' is a date from match_history, resolved against the version timeline. Two stores, one question."
+    },
+    {
+      "id": "data-01",
+      "class": "data_support",
+      "question": "why does it say I played 12 games when I played 30?",
+      "must": [
+        "provenance:match_history_window",
+        "player:match_history?window=30"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "#14 defect 2 exactly: win rate pinned to the hydration window rather than the requested one, so the same sentence meant different things for different players. The answer is about our own storage, not about Deadlock."
+    },
+    {
+      "id": "data-02",
+      "class": "data_support",
+      "question": "my last match isnt showing up",
+      "must": [
+        "provenance:sync_state",
+        "provenance:force_refetch_queue"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "force_refetch is 1/hr per IP -- the whole server's budget, not the user's -- so the honest answer is a queue position, not a refresh button (#16 section 6)."
+    },
+    {
+      "id": "data-03",
+      "class": "data_support",
+      "question": "how do you even know my win rate?",
+      "must": [
+        "provenance:outcome_derivation"
+      ],
+      "may": [
+        "player:match_history?window=20"
+      ],
+      "prose_gap": false,
+      "note": "Answer: won = (match_result == player_team), which agreed with upstream's own scoring on 411/411 rows. Support questions read our provenance, which is a first-class v1 class."
+    },
+    {
+      "id": "data-04",
+      "class": "data_support",
+      "question": "how fresh is this data?",
+      "must": [
+        "provenance:client_version",
+        "asset:steam-info"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Reads a stamp already in the store. Nothing checks freshness at answer time -- #15 measured the old per-query check at 1235 ms, ~99% of latency, and #16 retired it."
+    },
+    {
+      "id": "data-05",
+      "class": "data_support",
+      "question": "delete everything you have on me",
+      "must": [
+        "provenance:deletion"
+      ],
+      "may": [],
+      "prose_gap": false,
+      "note": "Must reach both stores: a per-player delete path in mirror.sqlite3 and a suppression entry in player.sqlite3, or the next rebuild re-fetches what someone asked us to erase."
+    }
+  ]
+}
