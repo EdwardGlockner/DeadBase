@@ -103,7 +103,7 @@ That loads the map, takes the first ticket on the frontier, assigns it to you, r
 
 Unblocked tickets may run **in parallel** in separate sessions — claiming assigns the ticket, so a concurrent session skips it.
 
-Start with **#12 (the answer catalog)**. Six tickets block on it, and it is the only one whose resolution unblocks a whole layer. **#25** is independent of it and can run at the same time.
+**#12 (the answer catalog) is resolved**, which opened the frontier to five: **#16**, **#18**, **#19**, **#25** and **#26**. Start with **#16** and **#25** — together they are the last two blockers on #17, which is the gate to the whole agent-architecture layer (#20 → #21, #22, #24). **#18**, **#19** and **#26** are independent and can run at the same time in separate sessions.
 
 Check what is takeable without opening the map:
 
