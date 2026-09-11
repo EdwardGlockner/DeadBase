@@ -6,7 +6,7 @@ built for [#25](https://github.com/EdwardGlockner/DeadBase/issues/25) so that
 architecture on evidence rather than on argument.
 
 - `retrieval-eval-set.json` — the set.
-- `score.py` — the scorer (stdlib only; `python3 docs/eval/score.py --selftest`).
+- Scoring rules are written out below; no script ships with the set.
 
 **Do not baseline the current implementation against this.** The FTS5 index over
 2,226 wiki pages is being deleted by
@@ -72,20 +72,29 @@ about with unguarded text-to-SQL, in miniature.
 
 ## Scoring
 
-```
-python3 docs/eval/score.py predictions.json
-```
+Four numbers, worked out by hand or by whatever harness #23 ends up building.
+No script ships with this set — the rules are short enough to state.
 
-`predictions.json` maps question id → a list of retrieved target ids, or
-`{"targets": [...], "gap_reported": true}` for systems that signal a missing
-surface.
+For each question, compare what the run retrieved against the question's
+`must` and `may` lists:
 
-| Metric | Definition |
-|---|---|
-| **must_recall** | mean over questions of (must targets hit / must targets) |
-| **exact_rate** | share of questions with must_recall == 1.0 |
-| **noise_rate** | mean over questions of (retrieved ids in neither bucket / retrieved) |
-| **gap_detection** | over the 12 `prose_gap` questions, share where the run reported the gap |
+- **must_recall** — of the question's `must` targets, how many were retrieved?
+  A question with three `must` targets and two retrieved scores 0.67. Average
+  across all 50 questions.
+- **exact_rate** — the share of the 50 questions that scored a full 1.0 on
+  must_recall.
+- **noise_rate** — of everything the run retrieved, how much was in neither the
+  `must` nor the `may` list? Average across the 50.
+- **gap_detection** — over the 12 `prose_gap` questions only: in how many did
+  the run say it could not explain this, rather than answering anyway?
+
+`*` globs when matching, so a retrieved `hero:72` satisfies a `hero:*` target.
+A question with nothing retrieved scores 0 recall and 0 noise.
+
+Keep `gap_detection` separate from the rest. A system that silently answers a
+gap question scores exactly the same on recall as one that flags it, and only
+the second is behaving correctly — averaging them together hides the single
+failure this set most wants to catch.
 
 No thresholds are set here. #17 compares architectures against each other on
 these four numbers; #23 owns turning a chosen architecture's numbers into a
