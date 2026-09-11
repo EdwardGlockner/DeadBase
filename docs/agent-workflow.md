@@ -118,9 +118,8 @@ A ticket with an assignee is claimed. GitHub renders open blockers on the issue 
 Eleven tickets are open. Blocking edges admit this order — each command is its own fresh session:
 
 ```bash
-/wayfinder 11 #12    # What the coach owes: the answer catalog   <- start here
-/wayfinder 11 #25    # A retrieval eval set for coaching questions  (independent of #12; can run in parallel)
-/wayfinder 11 #16    # Where game knowledge lives and how it is stored
+/wayfinder 11 #16    # Where game knowledge lives and how it is stored   <- start here
+/wayfinder 11 #25    # A retrieval eval set for coaching questions  (independent; can run in parallel)
 /wayfinder 11 #19    # What grounded means operationally
 /wayfinder 11 #18    # How item recommendations are derived
 /wayfinder 11 #23    # The eval harness and golden datasets
@@ -129,11 +128,12 @@ Eleven tickets are open. Blocking edges admit this order — each command is its
 /wayfinder 11 #21    # Is ADK plus Gemini the framework we keep
 /wayfinder 11 #22    # How agent instructions are authored and tested
 /wayfinder 11 #24    # Observability, tracing and monitoring
+/wayfinder 11 #26    # What the coach remembers between sessions  (deferred with its v2 class)
 ```
 
-Only #12 and #25 are takeable right now; the rest unblock as their blockers close, in the order above.
+Only #16, #18, #19, #25 and #26 are takeable right now; the rest unblock as their blockers close, in the order above.
 
-**Expect more than eleven.** Resolving a ticket can spawn new tickets and graduate fog from "Not yet specified" into real ones — player memory, the dashboards, the free-vs-paid boundary and the legal work are all still fog and will become tickets on this map. Do not treat the list above as the full count. The map is finished when this returns nothing:
+**Expect more than eleven.** Resolving a ticket can spawn new tickets and graduate fog from "Not yet specified" into real ones — the dashboards, the free-vs-paid boundary and the legal work are all still fog and will become tickets on this map. Do not treat the list above as the full count. The map is finished when this returns nothing:
 
 ```bash
 gh issue list --state open --json number --jq 'length'   # scoped to #11's sub-issues
