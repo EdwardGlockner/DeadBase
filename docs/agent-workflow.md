@@ -11,32 +11,35 @@ agent cannot start them on its own.
 
 ## Do this next
 
-Three tickets are takeable right now. Each is its own fresh session.
+**Nothing blocks anything any more.** Every open ticket is takeable, so these can
+all run at the same time in separate sessions. Order is by value, not by
+dependency.
 
 ```
-/wayfinder 11 #17
+/wayfinder 11 #23
 ```
 
-Start here. It unblocks four other tickets on its own, more than any other.
+Start here. Four closed tickets (`#12`, `#17`, `#19`, `#25`) each deferred a
+number to it — claim floors, frequency bands, retrieval thresholds, how often a
+failed grounding check is too often. It is where the deferred tuning has piled up.
 
-Then, in any order — these two are independent and can run at the same time in
-separate sessions:
-
-```
-/wayfinder 11 #18
-/wayfinder 11 #26
-```
-
-Two more are already assigned to you from earlier sessions but not finished:
+Then, in any order:
 
 ```
-/wayfinder 11 #19    # unblocks #22 and #23 — worth finishing early
+/wayfinder 11 #22    # authoring instructions — #19 gave it a contract to test against
+/wayfinder 11 #24    # observability — #19 made it one record, three reads, two lifetimes
+/wayfinder 11 #18    # item recommendations (independent)
+/wayfinder 11 #26    # what the coach remembers (independent)
+```
+
+One is already assigned to you from an earlier session and unfinished:
+
+```
 /wayfinder 11 #27    # research; can run in the background
 ```
 
 If you don't want to track any of this, just run `/wayfinder 11` with no ticket
-number. It picks the first one that is unclaimed and unblocked, which reproduces
-the order below on its own.
+number. It picks the first one that is unclaimed and unblocked.
 
 ---
 
@@ -46,7 +49,7 @@ the order below on its own.
 |---|---|---|
 | 0 | `/setup-matt-pocock-skills` | once ever — **done** |
 | 1 | `/wayfinder` | once to chart the map — **done** |
-| 2 | `/wayfinder 11` | **once per ticket** — 6 of 16 done |
+| 2 | `/wayfinder 11` | **once per ticket** — 10 of 16 done |
 | 3 | `/to-spec` | once |
 | 4 | `/to-tickets` | once |
 | 5 | `/implement <n>` | once per build ticket |
@@ -58,28 +61,21 @@ You are in **stage 2**.
 
 ---
 
-## The exact order, one session each
+## What is left, one session each
 
-Ten tickets are open. Each line is a separate session. The order respects which
-tickets block which — you cannot move a line up.
+Six tickets are open. Each line is a separate session, and **none of them blocks
+another** — the ordering below is what to do first, not what has to come first.
 
 ```
-/wayfinder 11 #17    How the agent finds the right knowledge      <- start here
-/wayfinder 11 #18    How item recommendations are derived          (independent)
-/wayfinder 11 #26    What the coach remembers between sessions     (independent)
-/wayfinder 11 #19    What grounded means operationally             (already assigned to you)
-/wayfinder 11 #27    How fresh is deadlock-api's match history     (research; independent)
-/wayfinder 11 #20    One agent or several                          needs #17
-/wayfinder 11 #23    The eval harness and golden datasets          needs #19
-/wayfinder 11 #21    Is ADK plus Gemini the framework we keep      needs #20
-/wayfinder 11 #22    How agent instructions are authored/tested    needs #19 and #20
-/wayfinder 11 #24    Observability, tracing and monitoring         needs #20
+/wayfinder 11 #23    The eval harness and golden datasets         <- start here
+/wayfinder 11 #22    How agent instructions are authored/tested
+/wayfinder 11 #24    Observability, tracing and monitoring
+/wayfinder 11 #18    How item recommendations are derived
+/wayfinder 11 #26    What the coach remembers between sessions
+/wayfinder 11 #27    How fresh is deadlock-api's match history    (research; assigned)
 ```
 
-The first five can run in parallel in separate sessions. The last five cannot
-start until what they need is closed.
-
-**Expect more than ten.** Resolving a ticket can create new ones. The dashboards,
+**Expect more than six.** Resolving a ticket can create new ones. The dashboards,
 the free-vs-paid boundary, the legal work and patch notifications are all still
 vague and will become tickets later. Stage 2 is over when this returns nothing:
 
@@ -91,7 +87,9 @@ gh api repos/EdwardGlockner/DeadBase/issues/11/sub_issues \
 ### Already done
 
 `#12` what the coach owes · `#13` data sources · `#14` player-data audit ·
-`#15` retrieval approaches · `#16` where knowledge lives · `#25` the eval set
+`#15` retrieval approaches · `#16` where knowledge lives · `#25` the eval set ·
+`#17` how the agent finds knowledge · `#20` one agent or several ·
+`#21` is ADK the framework we keep · `#19` what grounded means
 
 ---
 
