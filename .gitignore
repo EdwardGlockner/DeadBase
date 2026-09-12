@@ -36,3 +36,6 @@ patchnotes_export.md
 # Local Claude Code settings (machine-specific env; skills under .claude/skills/ stay tracked)
 .claude/settings.json
 .claude/settings.local.json
+
+# Agent worktrees — local scratch, never pushed
+.claude/worktrees/
