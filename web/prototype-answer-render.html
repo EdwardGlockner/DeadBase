@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<!--
+  PROTOTYPE — throwaway. Wayfinder ticket #32 "How a coach answer is rendered in chat".
+  Three structurally different renders of the same six typed-part answers, switchable via ?variant=A|B|C
+  and the floating bar (← → keys). Hosted in the real chat shell (styles.css) so density is honest.
+  Every number below is a live deadlock-api response fetched 2026-10-16, window from patch 2026-09-29.
+  Player rows are developer account 303017110. Nothing here is wired to a backend; taps mutate in-memory state only.
+  Run: python -m http.server 8765 -d web   →  http://localhost:8765/prototype-answer-render.html
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Deadbase — answer render prototype</title>
+<link rel="stylesheet" href="./styles.css" />
+<style>
+  .p-q { justify-self: end; background:#303030; padding:12px 16px; border-radius:18px; max-width:80%; }
+  .p-ans { display:grid; gap:10px; max-width:700px; }
+  .p-faint { color: var(--text-faint); }
+  .p-soft { color: var(--text-soft); }
+  .p-btn { background:none; border:1px solid var(--line); color:var(--text-soft); border-radius:999px; padding:3px 10px; font-size:12px; cursor:pointer; }
+  .p-btn:hover { color:var(--text); border-color: rgba(255,255,255,.2); }
+  .p-btn--primary { background: var(--accent-soft); color:#d9e8ff; border-color: transparent; }
+  .p-low { color:#e8c48b; }
+  .p-disputed { color: var(--danger); font-size:12px; }
+  .p-gap { border-radius: 12px; padding: 10px 14px; background: var(--panel-soft); border:1px dashed var(--line); color: var(--text-soft); }
+  .p-gap b { color: var(--text); font-weight: 600; }
+  .p-mem { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:10px 14px; border-radius:12px; background: var(--accent-soft); }
+  .p-mem__done { color: var(--text-soft); font-size: 13px; }
+
+  /* A — prose + evidence expander */
+  .a-prose { line-height: 1.6; }
+  .a-prose .a-f { }
+  .a-prose .a-f--low { border-bottom: 1px dashed #e8c48b; }
+  .a-prose .a-r { color: var(--text-soft); }
+  .a-meta { font-size: 12px; color: var(--text-faint); }
+  .a-exp { border-top:1px solid var(--line-soft); padding-top:8px; }
+  .a-exp summary { cursor:pointer; color: var(--text-faint); font-size:12px; }
+  .a-ev { display:grid; grid-template-columns: 1fr auto; gap:4px 12px; padding:8px 0; border-bottom:1px solid var(--line-soft); font-size:13px; }
+  .a-ev code { font-size: 11px; color: var(--text-faint); }
+
+  /* B — one block per part */
+  .b-part { border-radius:12px; padding:10px 14px; }
+  .b-fact { background: var(--panel); border-left: 3px solid var(--accent); }
+  .b-fact--low { border-left-color: #e8c48b; }
+  .b-fact__stats { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; font-size:12px; }
+  .b-chip { padding:2px 8px; border-radius:999px; background: rgba(255,255,255,.06); color: var(--text-soft); }
+  .b-chip--low { background: rgba(232,196,139,.14); color:#e8c48b; }
+  .b-reason { padding-left: 17px; color: var(--text-soft); border-left: 3px solid var(--line); border-radius:0; }
+  .b-reason__leans { font-size:12px; color: var(--text-faint); }
+  .b-pair { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+  .b-pair__label { font-size: 11px; text-transform: uppercase; letter-spacing:.06em; color: var(--text-faint); margin-bottom: 4px; }
+  .b-row { display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
+  .b-fact .p-btn { opacity: 0; transition: opacity .1s; }
+  .b-fact:hover .p-btn { opacity: 1; }
+
+  /* C — clean text, receipts panel */
+  .c-text { line-height: 1.6; }
+  .c-num { border-bottom: 1px solid rgba(138,180,248,.5); cursor: pointer; }
+  .c-num--low { border-bottom: 1px dashed #e8c48b; }
+  .c-num.is-open { background: var(--accent-soft); }
+  .c-foot { font-size:12px; color: var(--text-faint); display:flex; gap:10px; align-items:center; }
+  .c-panel { position: fixed; right:0; top:0; bottom:0; width: 340px; background: var(--sidebar); border-left:1px solid var(--line); padding: 20px; display:grid; align-content:start; gap:12px; z-index: 40; overflow:auto; }
+  .c-panel h3 { margin:0; font-size:14px; }
+  .c-panel dl { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; margin:0; font-size:13px; }
+  .c-panel dt { color: var(--text-faint); }
+  .c-split { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .c-split > div { padding: 10px 12px; border-radius: 10px; background: var(--panel-soft); }
+  .c-split h4 { margin:0 0 4px; font-size: 11px; font-weight:500; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); }
+  .d-pop { background: var(--panel); border:1px solid var(--line); border-radius: 12px; padding: 10px 14px; display:grid; gap:8px; font-size:13px; }
+  .d-pop dl { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; margin:0; }
+  .d-pop dt { color: var(--text-faint); }
+  .d-pop dd { margin:0; }
+  .c-gapline { color: var(--text-soft); font-style: italic; }
+
+  /* switcher — deliberately not part of the design */
+  .proto-bar { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 99; display:flex; align-items:center; gap:10px; background:#fff; color:#000; border-radius:999px; padding:6px 10px; box-shadow: 0 6px 24px rgba(0,0,0,.5); font: 600 13px/1 var(--font); }
+  .proto-bar button { background:#000; color:#fff; border:0; border-radius:999px; width:28px; height:28px; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar__top">
+      <div class="brand">
+        <div class="brand__mark"><img src="./assets/deadbase-monogram.png" alt="" /></div>
+        <div class="brand__copy"><div class="brand__title">Deadbase</div></div>
+      </div>
+      <button class="sidebar__new" type="button">New chat</button>
+    </div>
+  </aside>
+  <div class="workspace">
+    <header class="workspace__header">
+      <div class="workspace__heading">
+        <div class="workspace__title">Coach</div>
+        <div class="workspace__subtitle" id="variant-name"></div>
+      </div>
+    </header>
+    <main class="workspace__body">
+      <div class="thread-wrap"><div class="thread" id="thread"></div></div>
+    </main>
+  </div>
+</div>
+<div id="panel-host"></div>
+<div class="proto-bar"><button id="prev">←</button><span id="bar-label"></span><button id="next">→</button></div>
+
+<script>
+// ---------- data: six turns, typed parts ----------
+const PATCH = "2026-09-29";
+const TURNS = [
+  { q: "What should I buy as Haze into an Infernus?", label: "Full answer", parts: [
+    { kind:"fact", id:"t1f1", text:"Against Infernus, Haze wins 55.6% (26,140 of 47,006).", nums:["55.6%","26,140 of 47,006"],
+      src:"analytics:hero-counter-stats?hero=13&enemy=1", n:"47,006 matches", bracket:"All ranks", conf:"high" },
+    { kind:"fact", id:"t1f2", text:"In your bracket, Cheat Death does 6.5 points better against Infernus than its own baseline (136 of 196, against 420 of 668).", nums:["6.5 points","136 of 196","420 of 668"],
+      src:"analytics:item-stats?hero=13&enemy=1&bracket=own", n:"196 with / 668 baseline", bracket:"Own (Ritualist–Archon)", conf:"high" },
+    { kind:"fact", id:"t1f3", text:"Focus Lens does 3.5 points better (179 of 291, against 603 of 1,039).", nums:["3.5 points","179 of 291","603 of 1,039"],
+      src:"analytics:item-stats?hero=13&enemy=1&bracket=own", n:"291 with / 1,039 baseline", bracket:"Own (Ritualist–Archon)", conf:"high" },
+    { kind:"fact", id:"t1f4", text:"Warp Stone does 3.1 points better (113 of 196, against 402 of 737).", nums:["3.1 points","113 of 196","402 of 737"],
+      src:"analytics:item-stats?hero=13&enemy=1&bracket=own", n:"196 with / 737 baseline", bracket:"Own (Ritualist–Archon)", conf:"high" },
+    { kind:"reasoning", leans:["t1f2","t1f3","t1f4"], text:"Cheat Death's gain is about double the other two, so if you only fit one, that's the one." },
+    { kind:"talk", text:"Want me to check the rest of their team as well?" },
+  ]},
+  { q: "How am I doing on Billy and Wraith since the patch, and what should I fix in lane?", label: "Partial answer + low confidence", parts: [
+    { kind:"fact", id:"t2f1", text:"You won 4 of 7 Billy games since the patch.", nums:["4 of 7"],
+      src:"player:303017110/matches?hero=72", n:"7 resolved", bracket:"You", conf:"medium" },
+    { kind:"fact", id:"t2f2", text:"You won 2 of 3 Wraith games.", nums:["2 of 3"],
+      src:"player:303017110/matches?hero=7", n:"3 resolved", bracket:"You", conf:"low" },
+    { kind:"fact", id:"t2f3", text:"Billy wins 46.8% across all ranks (186,195 of 397,812).", nums:["46.8%","186,195 of 397,812"],
+      src:"analytics:hero-stats?hero=72", n:"397,812 matches", bracket:"All ranks", conf:"high" },
+    { kind:"reasoning", leans:["t2f1","t2f3"], text:"Seven games is short of what it takes to compare you against everyone else, so I'm not calling that a trend yet." },
+    { kind:"gap", reason:"not-written", topic:"lane phase", slug:"prose:lane-phase" },
+  ]},
+  { q: "Who counters Seven right now?", label: "Gap only — temporarily down", parts: [
+    { kind:"gap", reason:"down", topic:"matchup stats", slug:"analytics:hero-counter-stats?hero=2" },
+  ]},
+  { q: "Show me my rank history this season.", label: "Gap only — nobody has it", parts: [
+    { kind:"gap", reason:"nobody", topic:"your rank history", slug:"player:mmr-history" },
+    { kind:"talk", text:"I can show your record per hero since the patch instead, if that helps." },
+  ]},
+  { q: "Is Billy just bad into Abrams?", label: "Disagreement — two facts", parts: [
+    { kind:"fact", id:"t5f1", pair:"Your bracket", text:"In your bracket, Billy wins 45.6% against Abrams (557 of 1,222).", nums:["45.6%","557 of 1,222"],
+      src:"analytics:hero-counter-stats?hero=72&enemy=6&bracket=own", n:"1,222 matches", bracket:"Own (Ritualist–Archon)", conf:"high" },
+    { kind:"fact", id:"t5f2", pair:"Reference bracket", text:"In the Reference bracket (Ascendant and up), Billy wins 50.4% against Abrams (120 of 238).", nums:["50.4%","120 of 238"],
+      src:"analytics:hero-counter-stats?hero=72&enemy=6&bracket=reference", n:"238 matches", bracket:"Reference (Ascendant+)", conf:"high" },
+    { kind:"reasoning", leans:["t5f1","t5f2"], text:"The two brackets disagree: it's a losing matchup where you play and an even one higher up." },
+  ]},
+  { q: "I'm going to main Billy this season.", label: "Memory proposal", parts: [
+    { kind:"talk", text:"Good pick to focus on." },
+    { kind:"memory", memKind:"Focus hero", value:"Billy", why:"It only breaks ties when I suggest what to play. You can change it any time on your Memory page." },
+  ]},
+];
+
+const GAP_COPY = {
+  "not-written": t => `<b>No guide on ${t} yet.</b> Your question is logged, and logged questions are what guides get written from.`,
+  "down":        t => `<b>Can't get ${t} right now.</b> Try again later.`,
+  "nobody":      t => `<b>None of our sources have ${t}.</b>`,
+};
+const GAP_SHORT = { "not-written":"not written yet", "down":"temporarily down", "nobody":"nobody has it" };
+
+// in-memory UI state
+const state = { disputed:new Set(), mem:{}, open:null };
+
+// ---------- shared bits ----------
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const facts = t => t.parts.filter(p => p.kind==="fact");
+const confLabel = c => ({high:"High confidence", medium:"Medium confidence", low:"Low confidence"})[c];
+function disputeCtl(f, cls="p-btn") {
+  return state.disputed.has(f.id)
+    ? `<span class="p-disputed">Flagged for review · <a href="#" data-undispute="${f.id}">Undo</a></span>`
+    : `<button class="${cls}" data-dispute="${f.id}">Looks wrong?</button>`;
+}
+function memoryPart(p, ti) {
+  const s = state.mem[ti];
+  if (s === "yes") return `<div class="p-mem__done">✓ Remembered: ${p.memKind} = ${p.value}. <a href="#" class="p-faint">Memory page</a> · <a href="#" data-mem="${ti}" data-v="">Undo</a></div>`;
+  if (s === "no")  return `<div class="p-mem__done">Not saved.</div>`;
+  return `<div class="p-mem"><span>Remember <b>${p.value}</b> as your ${p.memKind.toLowerCase()}?</span>
+    <button class="p-btn p-btn--primary" data-mem="${ti}" data-v="yes">Remember</button>
+    <button class="p-btn" data-mem="${ti}" data-v="no">No thanks</button>
+    <div class="p-faint" style="flex-basis:100%;font-size:12px">${p.why}</div></div>`;
+}
+const gapBlock = p => `<div class="p-gap">${GAP_COPY[p.reason](p.topic)}</div>`;
+
+// ---------- Variant A: prose with an evidence expander ----------
+// Parts flow as one paragraph; facts carry no inline metadata except a low-confidence mark.
+// Evidence lives behind a collapsed expander listing each fact's lookup, N, patch, confidence and dispute.
+function VariantA(t, ti) {
+  const prose = t.parts.filter(p => p.kind==="fact"||p.kind==="reasoning").map(p => p.kind==="fact"
+      ? `<span class="a-f ${p.conf==="low"?"a-f--low":""}">${esc(p.text)}</span>${p.conf==="low"?` <span class="p-low" style="font-size:12px">(only ${p.n.split(" ")[0]} games)</span>`:""}`
+      : `<span class="a-r">${esc(p.text)}</span>`).join(" ");
+  const other = t.parts.filter(p => p.kind==="gap"||p.kind==="talk"||p.kind==="memory").map(p =>
+      p.kind==="gap" ? gapBlock(p) : p.kind==="talk" ? `<div>${esc(p.text)}</div>` : memoryPart(p, ti)).join("");
+  const fs = facts(t);
+  const meta = fs.length ? `<div class="a-meta">Patch ${PATCH} · ${fs.length} fact${fs.length>1?"s":""} from ${new Set(fs.map(f=>f.src)).size} lookup${new Set(fs.map(f=>f.src)).size>1?"s":""}</div>` : "";
+  const exp = fs.length ? `<details class="a-exp" ${state.disputed.size&&fs.some(f=>state.disputed.has(f.id))?"open":""}><summary>Evidence (${fs.length})</summary>
+      ${fs.map(f => `<div class="a-ev"><div>${esc(f.text)}<br><code>${f.src}</code></div>
+        <div style="text-align:right">${f.bracket}<br><span class="${f.conf==="low"?"p-low":"p-faint"}">${f.n} · ${confLabel(f.conf)}</span><br>${disputeCtl(f)}</div></div>`).join("")}
+    </details>` : "";
+  return `${prose?`<div class="a-prose">${prose}</div>`:""}${meta}${other}${exp}`;
+}
+
+// ---------- Variant B: every part is its own typed block ----------
+// Facts are cards with an always-visible stat strip; reasoning is an indented aside naming what it leans on;
+// a disagreement renders as two cards side by side. Dispute appears on hover per card. No expander.
+function VariantB(t, ti) {
+  const factCard = f => `<div class="b-part b-fact ${f.conf==="low"?"b-fact--low":""}">
+      <div class="b-row"><div>${esc(f.text)}</div>${disputeCtl(f)}</div>
+      <div class="b-fact__stats"><span class="b-chip">${f.bracket}</span><span class="b-chip">${f.n}</span><span class="b-chip">Patch ${PATCH}</span>
+        <span class="b-chip ${f.conf==="low"?"b-chip--low":""}">${f.conf==="low"?"Thin sample — read as a hint":confLabel(f.conf)}</span></div></div>`;
+  const pairs = facts(t).filter(f => f.pair);
+  let out = "";
+  if (pairs.length === 2) out += `<div class="b-pair">${pairs.map(f => `<div><div class="b-pair__label">${f.pair}</div>${factCard(f)}</div>`).join("")}</div>`;
+  for (const p of t.parts) {
+    if (p.kind==="fact" && !p.pair) out += factCard(p);
+    if (p.kind==="reasoning") {
+      const idx = p.leans.map(id => t.parts.filter(x=>x.kind==="fact").findIndex(f=>f.id===id)+1);
+      out += `<div class="b-part b-reason">${esc(p.text)}<div class="b-reason__leans">Based on fact ${idx.join(", ")}</div></div>`;
+    }
+    if (p.kind==="gap") out += gapBlock(p);
+    if (p.kind==="talk") out += `<div>${esc(p.text)}</div>`;
+    if (p.kind==="memory") out += memoryPart(p, ti);
+  }
+  return out;
+}
+
+// ---------- Variant C: clean text, numbers are links to a receipts panel ----------
+// Reads like a normal chat reply. Each figure is underlined; clicking it opens a side panel with the fact's
+// lookup, N, bracket, patch, confidence and the dispute control. Disagreement renders as a two-column split.
+function VariantC(t, ti) {
+  const linkNums = f => { let s = esc(f.text); for (const n of f.nums) s = s.replace(n, `<span class="c-num ${f.conf==="low"?"c-num--low":""} ${state.open===f.id?"is-open":""}" data-open="${f.id}">${n}</span>`); return s; };
+  const pairs = facts(t).filter(f => f.pair);
+  let body = "";
+  if (pairs.length===2) body += `<div class="c-split">${pairs.map(f=>`<div><h4>${f.pair}</h4>${linkNums(f)}</div>`).join("")}</div>`;
+  const flow = t.parts.filter(p => (p.kind==="fact"&&!p.pair)||p.kind==="reasoning").map(p => p.kind==="fact"?linkNums(p):esc(p.text)).join(" ");
+  if (flow) body += `<div class="c-text">${flow}</div>`;
+  for (const p of t.parts) {
+    if (p.kind==="gap") body += `<div class="c-gapline">${GAP_COPY[p.reason](p.topic).replace(/<\/?b>/g,"")}</div>`;
+    if (p.kind==="talk") body += `<div>${esc(p.text)}</div>`;
+    if (p.kind==="memory") body += memoryPart(p, ti);
+  }
+  const fs = facts(t);
+  const dis = fs.filter(f=>state.disputed.has(f.id)).length;
+  if (fs.length) body += `<div class="c-foot"><span>Patch ${PATCH}</span><span>·</span><span>Tap a number for its source</span>${dis?`<span class="p-disputed">· ${dis} marked as looking wrong</span>`:""}</div>`;
+  return body;
+}
+function panelC() {
+  if (!state.open || variant()!=="C") return "";
+  const f = TURNS.flatMap(t=>t.parts).find(p=>p.id===state.open);
+  return `<aside class="c-panel"><div class="b-row"><h3>Source</h3><button class="p-btn" data-close>Close</button></div>
+    <div>${esc(f.text)}</div>
+    <dl><dt>Lookup</dt><dd><code style="font-size:11px">${f.src}</code></dd><dt>Bracket</dt><dd>${f.bracket}</dd><dt>Sample</dt><dd>${f.n}</dd>
+      <dt>Patch</dt><dd>${PATCH}</dd><dt>Confidence</dt><dd class="${f.conf==="low"?"p-low":""}">${confLabel(f.conf)}${f.conf==="low"?" — too few games to lean on":""}</dd></dl>
+    <div>${disputeCtl(f)}</div></aside>`;
+}
+
+// ---------- Variant D: the combination agreed after A/B/C ----------
+// C's clean text + tappable numbers, but the source opens as a popover directly under the claim (phone-safe);
+// low confidence marked inline as in A; disagreement as a two-column split; gaps as A's callout; patch once per answer.
+function VariantD(t, ti) {
+  const linkNums = f => { let s = esc(f.text); for (const n of f.nums) s = s.replace(n, `<span class="c-num ${f.conf==="low"?"c-num--low":""} ${state.open===f.id?"is-open":""}" data-open="${f.id}">${n}</span>`);
+    return s + (f.conf==="low" ? ` <span class="p-low" style="font-size:12px">(only ${f.n.split(" ")[0]} games)</span>` : ""); };
+  const pop = ids => { const f = facts(t).find(x => x.id===state.open && ids.includes(x.id)); if (!f) return "";
+    return `<div class="d-pop"><div class="b-row"><dl><dt>Lookup</dt><dd><code style="font-size:11px">${f.src}</code></dd><dt>Bracket</dt><dd>${f.bracket}</dd><dt>Sample</dt><dd>${f.n}</dd>
+      <dt>Confidence</dt><dd class="${f.conf==="low"?"p-low":""}">${confLabel(f.conf)}</dd></dl><button class="p-btn" data-close>×</button></div>${disputeCtl(f)}</div>`; };
+  const pairs = facts(t).filter(f => f.pair);
+  let body = "";
+  if (pairs.length===2) body += `<div class="c-split">${pairs.map(f=>`<div><h4>${f.pair}</h4>${linkNums(f)}</div>`).join("")}</div>` + pop(pairs.map(f=>f.id));
+  const flowParts = t.parts.filter(p => (p.kind==="fact"&&!p.pair)||p.kind==="reasoning");
+  if (flowParts.length) body += `<div class="c-text">${flowParts.map(p => p.kind==="fact"?linkNums(p):esc(p.text)).join(" ")}</div>` + pop(flowParts.map(p=>p.id));
+  for (const p of t.parts) {
+    if (p.kind==="gap") body += gapBlock(p);
+    if (p.kind==="talk") body += `<div>${esc(p.text)}</div>`;
+    if (p.kind==="memory") body += memoryPart(p, ti);
+  }
+  const fs = facts(t), dis = fs.filter(f=>state.disputed.has(f.id)).length;
+  if (fs.length) body += `<div class="c-foot"><span>Patch ${PATCH}</span><span>·</span><span>Tap a number for its source</span>${dis?`<span class="p-disputed">· ${dis} flagged for review</span>`:""}</div>`;
+  return body;
+}
+
+// ---------- switcher + render ----------
+const VARIANTS = { A:["Prose + evidence expander", VariantA], B:["One block per part", VariantB], C:["Clean text + receipts panel", VariantC], D:["Agreed: C + popover, inline low, split, gap box", VariantD] };
+const KEYS = Object.keys(VARIANTS);
+const variant = () => { const v = new URLSearchParams(location.search).get("variant"); return KEYS.includes(v) ? v : "D"; };
+function setVariant(v) { const u = new URL(location); u.searchParams.set("variant", v); history.replaceState(null, "", u); state.open=null; render(); }
+function render() {
+  const v = variant(), [name, fn] = VARIANTS[v];
+  document.getElementById("bar-label").textContent = `${v} — ${name}`;
+  document.getElementById("variant-name").textContent = `Prototype #32 · variant ${v}: ${name}`;
+  document.getElementById("thread").innerHTML = TURNS.map((t,i) => `
+    <div class="message"><div class="message__meta">${i+1}. ${t.label}</div><div class="p-q">${esc(t.q)}</div></div>
+    <div class="message"><div class="p-ans">${fn(t,i)}</div></div>`).join("");
+  document.getElementById("panel-host").innerHTML = panelC();
+}
+document.addEventListener("click", e => {
+  const u = e.target.closest("[data-undispute]"); if (u) { e.preventDefault(); state.disputed.delete(u.dataset.undispute); render(); return; }
+  const d = e.target.closest("[data-dispute]"); if (d) { state.disputed.add(d.dataset.dispute); render(); return; }
+  const m = e.target.closest("[data-mem]"); if (m) { e.preventDefault(); state.mem[m.dataset.mem] = m.dataset.v || undefined; render(); return; }
+  const o = e.target.closest("[data-open]"); if (o) { state.open = o.dataset.open; render(); return; }
+  if (e.target.closest("[data-close]")) { state.open = null; render(); }
+});
+const step = d => setVariant(KEYS[(KEYS.indexOf(variant()) + d + KEYS.length) % KEYS.length]);
+document.getElementById("prev").onclick = () => step(-1);
+document.getElementById("next").onclick = () => step(1);
+document.addEventListener("keydown", e => {
+  if (e.target.closest("input,textarea,[contenteditable]")) return;
+  if (e.key==="ArrowLeft") step(-1); if (e.key==="ArrowRight") step(1);
+});
+render();
+</script>
+</body>
+</html>
